@@ -1,0 +1,148 @@
+# SwiftFormat Configuration File
+# https://github.com/nicklockwood/SwiftFormat
+# Optimized for testcontainers-swift library
+
+# =============================================================================
+# Swift Version
+# =============================================================================
+--swiftversion 5.9
+
+# =============================================================================
+# Indentation & Formatting
+# =============================================================================
+--indent 4
+--tabwidth 4
+--allman false
+--maxwidth 120
+
+# =============================================================================
+# Line Wrapping
+# =============================================================================
+--wraparguments preserve
+--wrapparameters preserve
+--wrapcollections preserve
+--wrapconditions before-first
+--wrapreturntype if-multiline
+
+# =============================================================================
+# Braces & Parentheses
+# =============================================================================
+--closingparen same-line
+--callsiteparen balanced
+--elseposition same-line
+--emptybraces spaced
+--ifdef no-indent
+
+# =============================================================================
+# Commas & Semicolons
+# =============================================================================
+--commas always
+--semicolons never
+
+# =============================================================================
+# Self & Explicit Types (Library Best Practices)
+# =============================================================================
+--self init-only
+--selfrequired init-only
+--redundanttype infer-locals-only
+--propertytypes infer-locals-only
+
+# =============================================================================
+# Optional Handling
+# =============================================================================
+--shortoptionals always
+
+# =============================================================================
+# Void Type
+# =============================================================================
+--voidtype void
+
+# =============================================================================
+# Unused Code Removal
+# =============================================================================
+--stripunusedargs closure-only
+
+# =============================================================================
+# Imports Organization
+# =============================================================================
+--importgrouping alphabetized
+
+# =============================================================================
+# Extensions & Types Organization
+# =============================================================================
+--extensionacl on-extension
+--typeblanklines remove
+
+# =============================================================================
+# MARK Comments (Code Organization)
+# =============================================================================
+--marktypes always
+--markextensions always
+
+# =============================================================================
+# Whitespace & Line Breaks
+# =============================================================================
+--linebreaks lf
+
+# =============================================================================
+# Header Comments
+# =============================================================================
+--header ignore
+
+# =============================================================================
+# Disabled Rules (Too opinionated or conflicts)
+# =============================================================================
+--disable wrapMultilineConditionalAssignment
+--disable unusedArguments
+
+--disable blankLinesAroundMark
+--disable trailingSpace
+--disable redundantInternal
+--disable consecutiveBlankLines
+--disable spaceAroundOperators
+--disable redundantReturn
+--disable wrapMultilineStatementBraces
+--disable emptyBraces
+--disable redundantMemberwiseInit
+--disable blankLinesAtEndOfScope
+--disable redundantMemberwiseInit
+--disable sortImports
+--disable wrapSingleLineComments
+--disable wrap
+--disable blankLinesAtStartOfScope
+--disable blankLinesBetweenScopes
+--disable spaceInsideBraces
+--disable wrapArguments
+--disable redundantSelf
+--disable trailingClosures
+--disable blankLineAfterImports
+--disable extensionAccessControl
+--disable wrapArguments
+--disable trailingClosures
+--disable extensionAccessControl
+--disable redundantParens
+--disable braces
+--disable indent
+--disable redundantOptionalBinding
+--disable simplifyGenericConstraints
+--disable redundantOptionalBinding
+--disable indent
+--disable redundantInit
+--disable redundantType
+--disable consecutiveSpaces
+--disable trailingCommas
+--disable redundantProperty
+--disable docComments
+
+
+# =============================================================================
+# Excluded Directories
+# =============================================================================
+--exclude .build
+--exclude .swiftpm
+--exclude Packages
+--exclude DerivedData
+--exclude .git
+--exclude docs
+--exclude vendor
+--exclude swift-nio

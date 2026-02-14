@@ -1,0 +1,42 @@
+# Xcode
+*.xcodeproj
+*.xcworkspace
+*.xcbkptlist
+*.playground
+xcuserdata/
+DerivedData/
+*.pbxuser
+*.mode1v3
+*.mode2v3
+*.perspectivev3
+
+# Swift Package Manager
+.build/
+.swiftpm/
+*.resolved
+Package.resolved
+
+# IDEs
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Misc
+*.log
+.env
+.env.local
+
+# CI/CD
+coverage.lcov
+dependencies.json
+dependencies.txt
+docs/
+*.profdata
+
+# Temporary files
+*.tmp
+.cache/

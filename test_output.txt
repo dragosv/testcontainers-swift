@@ -1,0 +1,82 @@
+Test Suite 'All tests' started at 2026-02-15 11:14:08.239.
+Test Suite 'testcontainers-swiftPackageTests.xctest' started at 2026-02-15 11:14:08.245.
+Test Suite 'ContainerBuilderTests' started at 2026-02-15 11:14:08.245.
+Test Case '-[TestcontainersTests.ContainerBuilderTests testBuilderFluentAPI]' started.
+Test Case '-[TestcontainersTests.ContainerBuilderTests testBuilderFluentAPI]' passed (0.000 seconds).
+Test Suite 'ContainerBuilderTests' passed at 2026-02-15 11:14:08.246.
+	 Executed 1 test, with 0 failures (0 unexpected) in 0.000 (0.001) seconds
+Test Suite 'ContainerTests' started at 2026-02-15 11:14:08.246.
+Test Case '-[TestcontainersTests.ContainerTests testPostgresConnectionString]' started.
+/Users/dragos/Development/testcontainers-swift/Sources/DockerClient.swift:372: error: -[TestcontainersTests.ContainerTests testPostgresConnectionString] : failed: caught error: "Error Domain=NSURLErrorDomain Code=-1004 "Could not connect to the server." UserInfo={_kCFStreamErrorCodeKey=61, NSUnderlyingError=0x11e852500 {Error Domain=kCFErrorDomainCFNetwork Code=-1004 "(null)" UserInfo={_NSURLErrorNWPathKey=satisfied (Path is satisfied), interface: lo0, _kCFStreamErrorCodeKey=61, _kCFStreamErrorDomainKey=1}}, _NSURLErrorFailingURLSessionTaskErrorKey=LocalDataTask <C02E8BCE-C2CA-41CC-8E24-AF70AA002418>.<1>, _NSURLErrorRelatedURLSessionTaskErrorKey=(
+    "LocalDataTask <C02E8BCE-C2CA-41CC-8E24-AF70AA002418>.<1>"
+), NSLocalizedDescription=Could not connect to the server., NSErrorFailingURLStringKey=http://localhost/v1.40/images/create?fromImage=postgres:15, NSErrorFailingURLKey=http://localhost/v1.40/images/create?fromImage=postgres:15, _kCFStreamErrorDomainKey=1}"
+<unknown>:0: -[TestcontainersTests.ContainerTests testPostgresConnectionString] : Test skipped: threw error "Could not connect to the server."
+Test Case '-[TestcontainersTests.ContainerTests testPostgresConnectionString]' failed (0.138 seconds).
+Test Suite 'ContainerTests' failed at 2026-02-15 11:14:08.384.
+	 Executed 1 test, with 1 test skipped and 1 failure (1 unexpected) in 0.138 (0.138) seconds
+Test Suite 'IntegrationTests' started at 2026-02-15 11:14:08.384.
+Test Case '-[TestcontainersTests.IntegrationTests testFullLifecycle]' started.
+/Users/dragos/Development/testcontainers-swift/Sources/DockerClient.swift:372: error: -[TestcontainersTests.IntegrationTests testFullLifecycle] : failed: caught error: "Error Domain=NSURLErrorDomain Code=-1004 "Could not connect to the server." UserInfo={_kCFStreamErrorCodeKey=61, NSUnderlyingError=0x11e8b3530 {Error Domain=kCFErrorDomainCFNetwork Code=-1004 "(null)" UserInfo={_NSURLErrorNWPathKey=satisfied (Path is satisfied), interface: lo0, _kCFStreamErrorCodeKey=61, _kCFStreamErrorDomainKey=1}}, _NSURLErrorFailingURLSessionTaskErrorKey=LocalDataTask <3FC8CF05-0369-48B7-AC10-039AEE499B13>.<2>, _NSURLErrorRelatedURLSessionTaskErrorKey=(
+    "LocalDataTask <3FC8CF05-0369-48B7-AC10-039AEE499B13>.<2>"
+), NSLocalizedDescription=Could not connect to the server., NSErrorFailingURLStringKey=http://localhost/v1.40/images/create?fromImage=alpine:latest, NSErrorFailingURLKey=http://localhost/v1.40/images/create?fromImage=alpine:latest, _kCFStreamErrorDomainKey=1}"
+Test Case '-[TestcontainersTests.IntegrationTests testFullLifecycle]' failed (0.003 seconds).
+Test Suite 'IntegrationTests' failed at 2026-02-15 11:14:08.387.
+	 Executed 1 test, with 1 failure (1 unexpected) in 0.003 (0.003) seconds
+Test Suite 'MongoDbModuleTests' started at 2026-02-15 11:14:08.387.
+Test Case '-[TestcontainersTests.MongoDbModuleTests testMongoDbContainer]' started.
+/Users/dragos/Development/testcontainers-swift/Sources/DockerClient.swift:372: error: -[TestcontainersTests.MongoDbModuleTests testMongoDbContainer] : failed: caught error: "Error Domain=NSURLErrorDomain Code=-1004 "Could not connect to the server." UserInfo={_kCFStreamErrorCodeKey=61, NSUnderlyingError=0x11ea4a9b0 {Error Domain=kCFErrorDomainCFNetwork Code=-1004 "(null)" UserInfo={_NSURLErrorNWPathKey=satisfied (Path is satisfied), interface: lo0, _kCFStreamErrorCodeKey=61, _kCFStreamErrorDomainKey=1}}, _NSURLErrorFailingURLSessionTaskErrorKey=LocalDataTask <029E1D22-1D66-479A-9AEB-895BBA9008E6>.<3>, _NSURLErrorRelatedURLSessionTaskErrorKey=(
+    "LocalDataTask <029E1D22-1D66-479A-9AEB-895BBA9008E6>.<3>"
+), NSLocalizedDescription=Could not connect to the server., NSErrorFailingURLStringKey=http://localhost/v1.40/images/create?fromImage=mongo:6.0, NSErrorFailingURLKey=http://localhost/v1.40/images/create?fromImage=mongo:6.0, _kCFStreamErrorDomainKey=1}"
+Test Case '-[TestcontainersTests.MongoDbModuleTests testMongoDbContainer]' failed (0.002 seconds).
+Test Suite 'MongoDbModuleTests' failed at 2026-02-15 11:14:08.389.
+	 Executed 1 test, with 1 failure (1 unexpected) in 0.002 (0.002) seconds
+Test Suite 'MySqlModuleTests' started at 2026-02-15 11:14:08.389.
+Test Case '-[TestcontainersTests.MySqlModuleTests testMySqlContainer]' started.
+/Users/dragos/Development/testcontainers-swift/Sources/DockerClient.swift:372: error: -[TestcontainersTests.MySqlModuleTests testMySqlContainer] : failed: caught error: "Error Domain=NSURLErrorDomain Code=-1004 "Could not connect to the server." UserInfo={_kCFStreamErrorCodeKey=61, NSUnderlyingError=0x11e8a0ec0 {Error Domain=kCFErrorDomainCFNetwork Code=-1004 "(null)" UserInfo={_NSURLErrorNWPathKey=satisfied (Path is satisfied), interface: lo0, _kCFStreamErrorCodeKey=61, _kCFStreamErrorDomainKey=1}}, _NSURLErrorFailingURLSessionTaskErrorKey=LocalDataTask <2813D24B-88F5-4F32-B9B6-C7AEF5C0111B>.<4>, _NSURLErrorRelatedURLSessionTaskErrorKey=(
+    "LocalDataTask <2813D24B-88F5-4F32-B9B6-C7AEF5C0111B>.<4>"
+), NSLocalizedDescription=Could not connect to the server., NSErrorFailingURLStringKey=http://localhost/v1.40/images/create?fromImage=mysql:8.0, NSErrorFailingURLKey=http://localhost/v1.40/images/create?fromImage=mysql:8.0, _kCFStreamErrorDomainKey=1}"
+Test Case '-[TestcontainersTests.MySqlModuleTests testMySqlContainer]' failed (0.001 seconds).
+Test Suite 'MySqlModuleTests' failed at 2026-02-15 11:14:08.390.
+	 Executed 1 test, with 1 failure (1 unexpected) in 0.001 (0.002) seconds
+Test Suite 'NetworkTests' started at 2026-02-15 11:14:08.390.
+Test Case '-[TestcontainersTests.NetworkTests testCreateNetwork]' started.
+/Users/dragos/Development/testcontainers-swift/Sources/DockerClient.swift:372: error: -[TestcontainersTests.NetworkTests testCreateNetwork] : failed: caught error: "Error Domain=NSURLErrorDomain Code=-1004 "Could not connect to the server." UserInfo={_kCFStreamErrorCodeKey=61, NSUnderlyingError=0x11e8e1bc0 {Error Domain=kCFErrorDomainCFNetwork Code=-1004 "(null)" UserInfo={_NSURLErrorNWPathKey=satisfied (Path is satisfied), interface: lo0, _kCFStreamErrorCodeKey=61, _kCFStreamErrorDomainKey=1}}, _NSURLErrorFailingURLSessionTaskErrorKey=LocalDataTask <17C3E297-91FA-497C-89AD-03B4A00BC7A2>.<5>, _NSURLErrorRelatedURLSessionTaskErrorKey=(
+    "LocalDataTask <17C3E297-91FA-497C-89AD-03B4A00BC7A2>.<5>"
+), NSLocalizedDescription=Could not connect to the server., NSErrorFailingURLStringKey=http://localhost/v1.40/networks/create, NSErrorFailingURLKey=http://localhost/v1.40/networks/create, _kCFStreamErrorDomainKey=1}"
+Test Case '-[TestcontainersTests.NetworkTests testCreateNetwork]' failed (0.002 seconds).
+Test Case '-[TestcontainersTests.NetworkTests testMultipleContainersOnNetwork]' started.
+/Users/dragos/Development/testcontainers-swift/Sources/DockerClient.swift:372: error: -[TestcontainersTests.NetworkTests testMultipleContainersOnNetwork] : failed: caught error: "Error Domain=NSURLErrorDomain Code=-1004 "Could not connect to the server." UserInfo={_kCFStreamErrorCodeKey=61, NSUnderlyingError=0x11d62a610 {Error Domain=kCFErrorDomainCFNetwork Code=-1004 "(null)" UserInfo={_NSURLErrorNWPathKey=satisfied (Path is satisfied), interface: lo0, _kCFStreamErrorCodeKey=61, _kCFStreamErrorDomainKey=1}}, _NSURLErrorFailingURLSessionTaskErrorKey=LocalDataTask <9A670BED-2A55-48ED-BE57-03DEC70BADB0>.<6>, _NSURLErrorRelatedURLSessionTaskErrorKey=(
+    "LocalDataTask <9A670BED-2A55-48ED-BE57-03DEC70BADB0>.<6>"
+), NSLocalizedDescription=Could not connect to the server., NSErrorFailingURLStringKey=http://localhost/v1.40/networks/create, NSErrorFailingURLKey=http://localhost/v1.40/networks/create, _kCFStreamErrorDomainKey=1}"
+Test Case '-[TestcontainersTests.NetworkTests testMultipleContainersOnNetwork]' failed (0.001 seconds).
+Test Suite 'NetworkTests' failed at 2026-02-15 11:14:08.393.
+	 Executed 2 tests, with 2 failures (2 unexpected) in 0.003 (0.003) seconds
+Test Suite 'PostgresModuleTests' started at 2026-02-15 11:14:08.393.
+Test Case '-[TestcontainersTests.PostgresModuleTests testPostgresContainer]' started.
+/Users/dragos/Development/testcontainers-swift/Sources/DockerClient.swift:372: error: -[TestcontainersTests.PostgresModuleTests testPostgresContainer] : failed: caught error: "Error Domain=NSURLErrorDomain Code=-1004 "Could not connect to the server." UserInfo={_kCFStreamErrorCodeKey=61, NSUnderlyingError=0x11d621890 {Error Domain=kCFErrorDomainCFNetwork Code=-1004 "(null)" UserInfo={_NSURLErrorNWPathKey=satisfied (Path is satisfied), interface: lo0, _kCFStreamErrorCodeKey=61, _kCFStreamErrorDomainKey=1}}, _NSURLErrorFailingURLSessionTaskErrorKey=LocalDataTask <154D490E-2B98-4200-BCBB-A8336C606C20>.<7>, _NSURLErrorRelatedURLSessionTaskErrorKey=(
+    "LocalDataTask <154D490E-2B98-4200-BCBB-A8336C606C20>.<7>"
+), NSLocalizedDescription=Could not connect to the server., NSErrorFailingURLStringKey=http://localhost/v1.40/images/create?fromImage=postgres:15, NSErrorFailingURLKey=http://localhost/v1.40/images/create?fromImage=postgres:15, _kCFStreamErrorDomainKey=1}"
+Test Case '-[TestcontainersTests.PostgresModuleTests testPostgresContainer]' failed (0.001 seconds).
+Test Suite 'PostgresModuleTests' failed at 2026-02-15 11:14:08.394.
+	 Executed 1 test, with 1 failure (1 unexpected) in 0.001 (0.001) seconds
+Test Suite 'RedisModuleTests' started at 2026-02-15 11:14:08.394.
+Test Case '-[TestcontainersTests.RedisModuleTests testRedisContainer]' started.
+/Users/dragos/Development/testcontainers-swift/Sources/DockerClient.swift:372: error: -[TestcontainersTests.RedisModuleTests testRedisContainer] : failed: caught error: "Error Domain=NSURLErrorDomain Code=-1004 "Could not connect to the server." UserInfo={_kCFStreamErrorCodeKey=61, NSUnderlyingError=0x10ac08c60 {Error Domain=kCFErrorDomainCFNetwork Code=-1004 "(null)" UserInfo={_NSURLErrorNWPathKey=satisfied (Path is satisfied), interface: lo0, _kCFStreamErrorCodeKey=61, _kCFStreamErrorDomainKey=1}}, _NSURLErrorFailingURLSessionTaskErrorKey=LocalDataTask <D1206B1C-74DE-450A-BB73-59B69BCFBC7F>.<8>, _NSURLErrorRelatedURLSessionTaskErrorKey=(
+    "LocalDataTask <D1206B1C-74DE-450A-BB73-59B69BCFBC7F>.<8>"
+), NSLocalizedDescription=Could not connect to the server., NSErrorFailingURLStringKey=http://localhost/v1.40/images/create?fromImage=redis:7, NSErrorFailingURLKey=http://localhost/v1.40/images/create?fromImage=redis:7, _kCFStreamErrorDomainKey=1}"
+Test Case '-[TestcontainersTests.RedisModuleTests testRedisContainer]' failed (0.002 seconds).
+Test Suite 'RedisModuleTests' failed at 2026-02-15 11:14:08.396.
+	 Executed 1 test, with 1 failure (1 unexpected) in 0.002 (0.002) seconds
+Test Suite 'WaitStrategyTests' started at 2026-02-15 11:14:08.396.
+Test Case '-[TestcontainersTests.WaitStrategyTests testWaitStrategyCreation]' started.
+Test Case '-[TestcontainersTests.WaitStrategyTests testWaitStrategyCreation]' passed (0.000 seconds).
+Test Suite 'WaitStrategyTests' passed at 2026-02-15 11:14:08.396.
+	 Executed 1 test, with 0 failures (0 unexpected) in 0.000 (0.000) seconds
+Test Suite 'testcontainers-swiftPackageTests.xctest' failed at 2026-02-15 11:14:08.396.
+	 Executed 10 tests, with 1 test skipped and 8 failures (8 unexpected) in 0.150 (0.151) seconds
+Test Suite 'All tests' failed at 2026-02-15 11:14:08.396.
+	 Executed 10 tests, with 1 test skipped and 8 failures (8 unexpected) in 0.150 (0.157) seconds
+◇ Test run started.
+↳ Testing Library Version: 1501
+↳ Target Platform: arm64e-apple-macos14.0
+✔ Test run with 0 tests in 0 suites passed after 0.001 seconds.

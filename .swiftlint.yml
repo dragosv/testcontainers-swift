@@ -1,0 +1,84 @@
+# SwiftLint Configuration File
+# https://github.com/realm/SwiftLint
+
+# Disabled rules
+disabled_rules:
+  - trailing_whitespace
+  - vertical_whitespace
+  - line_length
+  - file_length
+  - type_body_length
+  - function_body_length
+  - cyclomatic_complexity
+  - nesting
+  - todo
+
+# Enabled rules
+opt_in_rules:
+  - empty_count
+  - missing_docs
+  - redundant_nil_coalescing
+  - redundant_type_annotation
+  - unused_import
+  - unused_declaration
+  - unused_parameter
+  - force_unwrapping
+  - force_cast
+  - force_try
+  - implicitly_unwrapped_optional
+
+# Custom rules
+custom_rules:
+  no_direct_standard_out_logs:
+    name: "No direct standard out logs"
+    regex: "print\\("
+    message: "Don't use print() directly, use a logging framework"
+    severity: warning
+
+  no_force_unwrapping:
+    name: "No force unwrapping"
+    regex: "\\!"
+    message: "Avoid force unwrapping with '!'"
+    severity: error
+
+# Rule configurations
+missing_docs:
+  warning: 50  # Warn if less than 50% of public declarations are documented
+
+line_length:
+  warning: 120
+  error: 150
+
+file_length:
+  warning: 500
+  error: 1000
+
+type_body_length:
+  warning: 300
+  error: 400
+
+function_body_length:
+  warning: 50
+  error: 100
+
+cyclomatic_complexity:
+  warning: 10
+  error: 15
+
+# Excluded files and directories
+excluded:
+  - .build/
+  - .swiftpm/
+  - Packages/
+  - DerivedData/
+  - .git/
+  - docs/
+  - vendor/
+
+# Included file types
+included:
+  - Sources/**/*.swift
+  - Tests/**/*.swift
+
+# Reporter type
+reporter: "xcode" # reporter type (xcode, json, csv, checkstyle, junit, html, emoji)
