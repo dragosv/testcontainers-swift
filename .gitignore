@@ -40,3 +40,4 @@ docs/
 # Temporary files
 *.tmp
 .cache/
+swift-nio

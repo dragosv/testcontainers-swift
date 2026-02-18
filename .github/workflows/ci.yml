@@ -21,10 +21,6 @@ jobs:
         include:
           - os: ubuntu-latest
             swift: '6.2'
-#          - os: macos-latest
-#            swift: '6.2'
-#          - os: macos-13
-#            swift: '6.1'
 
     steps:
     - name: Checkout code
@@ -102,34 +98,6 @@ jobs:
           echo "⚠️ Could not find coverage files"
           echo "Available files:"
           find .build -name "*.profdata" -o -name "*.xctest" 2>/dev/null | head -20
-          touch coverage.lcov
-        fi
-
-    - name: Generate LCOV coverage report
-      run: |
-        PROFDATA="${{ steps.find-profdata.outputs.profdata_path }}"
-        BINARY="${{ steps.find-binary.outputs.binary_path }}"
-        
-        if [ -n "$PROFDATA" ] && [ -n "$BINARY" ] && [ -f "$PROFDATA" ] && [ -f "$BINARY" ]; then
-          echo "Generating LCOV report..."
-          xcrun llvm-cov export \
-            -format="lcov" \
-            -instr-profile="$PROFDATA" \
-            "$BINARY" \
-            > coverage.lcov
-        
-          echo "Coverage report generated successfully"
-          echo "--- Coverage Summary ---"
-          xcrun llvm-cov report \
-            -instr-profile="$PROFDATA" \
-            "$BINARY" \
-            --ignore-filename-regex=".build|Tests" \
-            2>/dev/null || true
-        else
-          echo "Warning: Could not find profdata or binary for coverage report"
-          echo "PROFDATA: $PROFDATA"
-          echo "BINARY: $BINARY"
-          # Create empty coverage file to prevent upload failure
           touch coverage.lcov
         fi
 
