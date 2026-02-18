@@ -120,7 +120,7 @@ testcontainers-swift/
 
 ```swift
 // Package.swift
-.package(url: "https://github.com/testcontainers/testcontainers-swift.git", from: "0.1.0")
+.package(url: "https://github.com/dragosv/testcontainers-swift.git", from: "0.1.0")
 ```
 
 ### Basic Usage

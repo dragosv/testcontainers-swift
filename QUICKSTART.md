@@ -14,7 +14,7 @@ dependencies: [
 
 Or in Xcode:
 1. File → Add Packages
-2. Enter: `https://github.com/testcontainers/testcontainers-swift.git`
+2. Enter: `https://github.com/dragosv/testcontainers-swift.git`
 3. Select version and add to project
 
 ## Prerequisites

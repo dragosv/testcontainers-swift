@@ -336,7 +336,7 @@ Automated workflow includes:
 
 ## Getting Started
 
-1. **Clone Repository**: `https://github.com/testcontainers/testcontainers-swift.git`
+1. **Clone Repository**: `https://github.com/dragosv/testcontainers-swift.git`
 2. **Build Project**: `swift build`
 3. **Run Examples**: See `Examples/main.swift`
 4. **Run Tests**: `swift test`
