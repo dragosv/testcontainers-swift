@@ -1,6 +1,11 @@
-# Docker Client
+[![Project Status: Active - The project has reached a stable, usable state and is being actively developed.](http://www.repostatus.org/badges/latest/active.svg)](http://www.repostatus.org/#active) [![Build Status](https://img.shields.io/travis/com/dragosv/testcontainers-swift/master.svg?label=linux+build)](https://https://app.travis-ci.com/github/dragosv/testcontainers-swift)
+[![Build status](https://github.com/dragosv/testcontainers-swift/actions/workflows/main.yml/badge.svg)](https://github.com/dragosv/testcontainers-swift/actions/workflows/main.yml)
+[![codecov](https://codecov.io/gh/dragosv/testcontainers-swift/branch/master/graph/badge.svg)](https://codecov.io/gh/dragosv/testcontainers-swift)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=shields)](http://makeapullrequest.com)
+[![Join the chat at https://gitter.im/testcontainers-swift/Lobby](https://badges.gitter.im/testcontainers-swift/Lobby.svg)](https://gitter.im/testcontainers-swift/Lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Fdragosv%2Ftestcontainers-swift.svg?type=shield)](https://app.fossa.io/projects/git%2Bgithub.com%2Fdragosv%2Ftestcontainers-swift?ref=badge_shield)
 [![Language](https://img.shields.io/badge/Swift-6.0-brightgreen.svg)](http://swift.org)
-[![Docker Engine API](https://img.shields.io/badge/Docker%20Engine%20API-%20%201.4.4-blue)](https://docs.docker.com/engine/api/v1.44/)
+[![Docker](https://img.shields.io/badge/Docker%20Engine%20API-%20%201.4.4-blue)](https://docs.docker.com/engine/api/v1.44/)
 
 # Testcontainers for Swift
 
