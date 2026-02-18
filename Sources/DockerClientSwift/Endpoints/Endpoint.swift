@@ -1,5 +1,5 @@
-import NIOHTTP1
 import Foundation
+import NIOHTTP1
 
 public protocol Endpoint {
     associatedtype Response: Codable
@@ -9,9 +9,9 @@ public protocol Endpoint {
     var body: Body? { get }
 }
 
-extension Endpoint {
-    public var body: Body? {
-        return nil
+public extension Endpoint {
+    var body: Body? {
+        nil
     }
 }
 

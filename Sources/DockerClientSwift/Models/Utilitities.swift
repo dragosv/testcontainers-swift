@@ -23,11 +23,10 @@ extension Digest: ExpressibleByStringLiteral {
     }
 }
 
-extension Digest: Codable {}
+extension Digest: Codable { }
 
 public enum DockerError: Error {
     case message(String)
     case unknownResponse(String)
     case errorCode(Int, String?)
 }
-

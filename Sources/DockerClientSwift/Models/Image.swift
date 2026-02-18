@@ -3,7 +3,6 @@ import Foundation
 /// Representation of an image.
 /// Some actions can be performed on an instance.
 public struct Image {
-
     /// Local ID of the image. This can vary from instant to instant.
     public var id: Identifier<Image>
 
@@ -21,17 +20,22 @@ public struct Image {
         public var tag: String?
     }
 
-    public init(id: Identifier<Image>, digest: Digest? = nil, repoTags: [String]?=nil, createdAt: Date?=nil) {
-        let repositoryTags = repoTags.map({ repoTags in
+    public init(id: Identifier<Image>, digest: Digest? = nil, repoTags: [String]? = nil, createdAt: Date? = nil) {
+        let repositoryTags = repoTags.map { repoTags in
             repoTags.compactMap { repoTag in
-                return RepositoryTag(repoTag)
+                RepositoryTag(repoTag)
             }
-        }) ?? []
+        } ?? []
 
         self.init(id: id, digest: digest, repositoryTags: repositoryTags, createdAt: createdAt)
     }
 
-    public init(id: Identifier<Image>, digest: Digest? = nil, repositoryTags: [RepositoryTag]?=nil, createdAt: Date?=nil) {
+    public init(
+        id: Identifier<Image>,
+        digest: Digest? = nil,
+        repositoryTags: [RepositoryTag]? = nil,
+        createdAt: Date? = nil)
+    {
         self.id = id
         self.digest = digest
         self.createdAt = createdAt
@@ -49,7 +53,7 @@ extension Image.RepositoryTag {
         guard !value.hasPrefix("sha256") else { return nil }
         let components = value.split(separator: ":").map(String.init)
         if components.count == 2 {
-            self.repository =  components[0]
+            self.repository = components[0]
             self.tag = components[1]
         } else if components.count == 1 {
             self.repository = value
@@ -59,5 +63,5 @@ extension Image.RepositoryTag {
     }
 }
 
-extension Image: Codable {}
-extension Image.RepositoryTag: Codable {}
+extension Image: Codable { }
+extension Image.RepositoryTag: Codable { }

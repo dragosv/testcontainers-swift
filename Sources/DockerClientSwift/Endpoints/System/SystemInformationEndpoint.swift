@@ -2,13 +2,14 @@ import NIOHTTP1
 
 struct SystemInformationEndpoint: Endpoint {
     typealias Body = NoBody
-    
+
     var method: HTTPMethod = .GET
     let path: String = "info"
 
     typealias Response = SystemInformationResponse
-    
+
     // MARK: - SystemInformationResponse
+
     struct SystemInformationResponse: Codable {
         let id: String
         let containers, containersRunning, containersPaused, containersStopped: Int
@@ -114,6 +115,7 @@ struct SystemInformationEndpoint: Endpoint {
     }
 
     // MARK: - Commit
+
     struct Commit: Codable {
         let id, expected: String
 
@@ -124,6 +126,7 @@ struct SystemInformationEndpoint: Endpoint {
     }
 
     // MARK: - DefaultAddressPool
+
     struct DefaultAddressPool: Codable {
         let base, size: String
 
@@ -134,6 +137,7 @@ struct SystemInformationEndpoint: Endpoint {
     }
 
     // MARK: - GenericResource
+
     struct GenericResource: Codable {
         let discreteResourceSpec: DiscreteResourceSpec?
         let namedResourceSpec: NamedResourceSpec?
@@ -145,6 +149,7 @@ struct SystemInformationEndpoint: Endpoint {
     }
 
     // MARK: - DiscreteResourceSpec
+
     struct DiscreteResourceSpec: Codable {
         let kind: String
         let value: Int
@@ -156,6 +161,7 @@ struct SystemInformationEndpoint: Endpoint {
     }
 
     // MARK: - NamedResourceSpec
+
     struct NamedResourceSpec: Codable {
         let kind, value: String
 
@@ -166,6 +172,7 @@ struct SystemInformationEndpoint: Endpoint {
     }
 
     // MARK: - Plugins
+
     struct Plugins: Codable {
         let volume, network, authorization, log: [String]?
 
@@ -178,8 +185,10 @@ struct SystemInformationEndpoint: Endpoint {
     }
 
     // MARK: - RegistryConfig
+
     struct RegistryConfig: Codable {
-        let allowNondistributableArtifactsCIDRs, allowNondistributableArtifactsHostnames, insecureRegistryCIDRs: [String]
+        let allowNondistributableArtifactsCIDRs, allowNondistributableArtifactsHostnames,
+            insecureRegistryCIDRs: [String]
         let indexConfigs: [String: IndexConfig]
         let mirrors: [String]
 
@@ -193,6 +202,7 @@ struct SystemInformationEndpoint: Endpoint {
     }
 
     // MARK: - IndexConfig
+
     struct IndexConfig: Codable {
         let name: String
         let mirrors: [String]
@@ -207,6 +217,7 @@ struct SystemInformationEndpoint: Endpoint {
     }
 
     // MARK: - Runtimes
+
     struct Runtimes: Codable {
         let runc, runcMaster: Runc?
         let custom: Custom?
@@ -219,17 +230,20 @@ struct SystemInformationEndpoint: Endpoint {
     }
 
     // MARK: - Custom
+
     struct Custom: Codable {
         let path: String
         let runtimeArgs: [String]
     }
 
     // MARK: - Runc
+
     struct Runc: Codable {
         let path: String
     }
 
     // MARK: - Swarm
+
     struct Swarm: Codable {
         let nodeID, nodeAddr, localNodeState: String
         let controlAvailable: Bool
@@ -252,6 +266,7 @@ struct SystemInformationEndpoint: Endpoint {
     }
 
     // MARK: - Cluster
+
     struct Cluster: Codable {
         let id: String
         let version: Version
@@ -278,6 +293,7 @@ struct SystemInformationEndpoint: Endpoint {
     }
 
     // MARK: - Spec
+
     struct Spec: Codable {
         let name: String
         let labels: Labels
@@ -301,6 +317,7 @@ struct SystemInformationEndpoint: Endpoint {
     }
 
     // MARK: - CAConfig
+
     struct CAConfig: Codable {
         let nodeCERTExpiry: Int
         let externalCAs: [ExternalCA]
@@ -317,6 +334,7 @@ struct SystemInformationEndpoint: Endpoint {
     }
 
     // MARK: - ExternalCA
+
     struct ExternalCA: Codable {
         let externalCAProtocol, url: String
         let options: ExternalCAOptions
@@ -331,11 +349,13 @@ struct SystemInformationEndpoint: Endpoint {
     }
 
     // MARK: - ExternalCAOptions
+
     struct ExternalCAOptions: Codable {
         let property1, property2: String
     }
 
     // MARK: - Dispatcher
+
     struct Dispatcher: Codable {
         let heartbeatPeriod: Int
 
@@ -345,6 +365,7 @@ struct SystemInformationEndpoint: Endpoint {
     }
 
     // MARK: - EncryptionConfig
+
     struct EncryptionConfig: Codable {
         let autoLockManagers: Bool
 
@@ -354,6 +375,7 @@ struct SystemInformationEndpoint: Endpoint {
     }
 
     // MARK: - Labels
+
     struct Labels: Codable {
         let comExampleCorpType, comExampleCorpDepartment: String
 
@@ -364,6 +386,7 @@ struct SystemInformationEndpoint: Endpoint {
     }
 
     // MARK: - Orchestration
+
     struct Orchestration: Codable {
         let taskHistoryRetentionLimit: Int
 
@@ -373,6 +396,7 @@ struct SystemInformationEndpoint: Endpoint {
     }
 
     // MARK: - Raft
+
     struct Raft: Codable {
         let snapshotInterval, keepOldSnapshots, logEntriesForSlowFollowers, electionTick: Int
         let heartbeatTick: Int
@@ -387,6 +411,7 @@ struct SystemInformationEndpoint: Endpoint {
     }
 
     // MARK: - TaskDefaults
+
     struct TaskDefaults: Codable {
         let logDriver: LogDriver
 
@@ -396,6 +421,7 @@ struct SystemInformationEndpoint: Endpoint {
     }
 
     // MARK: - LogDriver
+
     struct LogDriver: Codable {
         let name: String
         let options: LogDriverOptions
@@ -407,6 +433,7 @@ struct SystemInformationEndpoint: Endpoint {
     }
 
     // MARK: - LogDriverOptions
+
     struct LogDriverOptions: Codable {
         let maxFile, maxSize: String
 
@@ -417,6 +444,7 @@ struct SystemInformationEndpoint: Endpoint {
     }
 
     // MARK: - TLSInfo
+
     struct TLSInfo: Codable {
         let trustRoot, certIssuerSubject, certIssuerPublicKey: String
 
@@ -428,6 +456,7 @@ struct SystemInformationEndpoint: Endpoint {
     }
 
     // MARK: - Version
+
     struct Version: Codable {
         let index: Int
 
@@ -437,6 +466,7 @@ struct SystemInformationEndpoint: Endpoint {
     }
 
     // MARK: - RemoteManager
+
     struct RemoteManager: Codable {
         let nodeID, addr: String
 

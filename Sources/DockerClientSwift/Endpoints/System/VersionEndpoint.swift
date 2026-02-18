@@ -1,17 +1,17 @@
 import NIOHTTP1
 
 public struct NoBody: Codable {
-    public init() {}
+    public init() { }
 }
 
 struct VersionEndpoint: Endpoint {
     typealias Body = NoBody
-    
+
     var method: HTTPMethod = .GET
     let path: String = "version"
 
     typealias Response = VersionResponse
-    
+
     struct VersionResponse: Codable {
         let platform: Platform
         let components: [Component]
@@ -35,6 +35,7 @@ struct VersionEndpoint: Endpoint {
     }
 
     // MARK: - Component
+
     struct Component: Codable {
         let name, version: String
         let details: Details
@@ -47,6 +48,7 @@ struct VersionEndpoint: Endpoint {
     }
 
     // MARK: - Details
+
     struct Details: Codable {
         let apiVersion, arch, buildTime, experimental: String?
         let gitCommit: String
@@ -66,6 +68,7 @@ struct VersionEndpoint: Endpoint {
     }
 
     // MARK: - Platform
+
     struct Platform: Codable {
         let name: String
 

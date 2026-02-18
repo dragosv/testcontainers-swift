@@ -11,4 +11,4 @@ public struct Service {
     public var image: Image
 }
 
-extension Service: Codable {}
+extension Service: Codable { }

@@ -1,13 +1,12 @@
 import Foundation
 
-extension DockerClient {
-
+public extension DockerClient {
     /// APIs related to images.
-    public var images: ImagesAPI {
+    var images: ImagesAPI {
         .init(client: self)
     }
 
-    public struct ImagesAPI {
+    struct ImagesAPI {
         fileprivate var client: DockerClient
 
         /// Pulls an image by its name. If a tag or digest is specified these are fetched as well.
@@ -21,10 +20,10 @@ extension DockerClient {
             async throws -> Image
         {
             var identifier = name
-            if let tag = tag {
+            if let tag {
                 identifier += ":\(tag)"
             }
-            if let digest = digest {
+            if let digest {
                 identifier += "@\(digest.rawValue)"
             }
             return try await pullImage(byIdentifier: identifier)
@@ -36,7 +35,7 @@ extension DockerClient {
         /// - Returns: Returns the `Image` that has been fetched.
         public func pullImage(byIdentifier identifier: String) async throws -> Image {
             _ = try await client.run(PullImageEndpoint(imageName: identifier))
-            return try await self.get(imageByNameOrId: identifier)
+            return try await get(imageByNameOrId: identifier)
         }
 
         /// Gets all images in the Docker system.
@@ -47,9 +46,10 @@ extension DockerClient {
             let images = try await client.run(ListImagesEndpoint(all: all))
             return images.map { image in
                 Image(
-                    id: .init(image.Id), digest: image.RepoDigests?.first.map({ Digest.init($0) }),
+                    id: .init(image.Id), digest: image.RepoDigests?.first.map { Digest($0) },
                     repoTags: image.RepoTags,
-                    createdAt: Date(timeIntervalSince1970: TimeInterval(image.Created)))
+                    createdAt: Date(timeIntervalSince1970: TimeInterval(image.Created))
+                )
             }
         }
 
@@ -69,19 +69,22 @@ extension DockerClient {
         public func get(imageByNameOrId nameOrId: String) async throws -> Image {
             let image = try await client.run(InspectImagesEndpoint(nameOrId: nameOrId))
             return Image(
-                id: .init(image.Id), digest: image.RepoDigests?.first.map({ Digest.init($0) }),
-                repoTags: image.RepoTags, createdAt: Date.parseDockerDate(image.Created)!)
+                id: .init(image.Id), digest: image.RepoDigests?.first.map { Digest($0) },
+                repoTags: image.RepoTags, createdAt: Date.parseDockerDate(image.Created)!
+            )
         }
 
         /// Deletes all unused images.
-        /// - Parameter all: When set to `true`, prune only unused and untagged images. When set to `false`, all unused images are pruned.
+        /// - Parameter all: When set to `true`, prune only unused and untagged images. When set to `false`, all unused
+        /// images are pruned.
         /// - Throws: Errors that can occur when executing the request.
         /// - Returns: Returns `PrunedImages` details about removed images and the reclaimed space.
         public func prune(all: Bool = false) async throws -> PrunedImages {
             let response = try await client.run(PruneImagesEndpoint(dangling: !all))
             return PrunedImages(
-                imageIds: response.ImagesDeleted?.compactMap(\.Deleted).map({ .init($0) }) ?? [],
-                reclaimedSpace: response.SpaceReclaimed)
+                imageIds: response.ImagesDeleted?.compactMap(\.Deleted).map { .init($0) } ?? [],
+                reclaimedSpace: response.SpaceReclaimed
+            )
         }
 
         public struct PrunedImages {
@@ -93,13 +96,13 @@ extension DockerClient {
     }
 }
 
-extension Image {
+public extension Image {
     /// Removes this image.
     /// - Parameters:
     ///   - client: A `DockerClient` instance that is used to perform the request.
     ///   - force: When set to `true`, force removal. Default is `false`.
     /// - Throws: Errors that can occur when executing the request.
-    public func remove(on client: DockerClient, force: Bool = false) async throws {
+    func remove(on client: DockerClient, force: Bool = false) async throws {
         try await client.images.remove(image: self, force: force)
     }
 }
@@ -108,7 +111,7 @@ extension Image {
     /// Parses an image identifier to its corresponding digest, name and tag.
     /// - Parameter value: Image identifier.
     /// - Returns: Returns an `Optional` tuple of a `Digest` and a `RepositoryTag`.
-    internal static func parseNameTagDigest(_ value: String) -> (Digest, RepositoryTag)? {
+    static func parseNameTagDigest(_ value: String) -> (Digest, RepositoryTag)? {
         let components = value.split(separator: "@").map(String.init)
         if components.count == 2, let nameTag = RepositoryTag(components[0]) {
             return (.init(components[1]), nameTag)

@@ -95,46 +95,6 @@
 --disable wrapMultilineConditionalAssignment
 --disable unusedArguments
 
---disable blankLinesAroundMark
---disable trailingSpace
---disable redundantInternal
---disable consecutiveBlankLines
---disable spaceAroundOperators
---disable redundantReturn
---disable wrapMultilineStatementBraces
---disable emptyBraces
---disable redundantMemberwiseInit
---disable blankLinesAtEndOfScope
---disable redundantMemberwiseInit
---disable sortImports
---disable wrapSingleLineComments
---disable wrap
---disable blankLinesAtStartOfScope
---disable blankLinesBetweenScopes
---disable spaceInsideBraces
---disable wrapArguments
---disable redundantSelf
---disable trailingClosures
---disable blankLineAfterImports
---disable extensionAccessControl
---disable wrapArguments
---disable trailingClosures
---disable extensionAccessControl
---disable redundantParens
---disable braces
---disable indent
---disable redundantOptionalBinding
---disable simplifyGenericConstraints
---disable redundantOptionalBinding
---disable indent
---disable redundantInit
---disable redundantType
---disable consecutiveSpaces
---disable trailingCommas
---disable redundantProperty
---disable docComments
-
-
 # =============================================================================
 # Excluded Directories
 # =============================================================================

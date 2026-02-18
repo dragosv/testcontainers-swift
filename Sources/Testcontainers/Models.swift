@@ -69,7 +69,7 @@ public struct DockerContainer: Codable {
     public let names: [String]
     public let ports: [DockerPortBinding]
     public let labels: [String: String]?
-    
+
     enum CodingKeys: String, CodingKey {
         case id = "Id"
         case state = "State"
@@ -85,7 +85,7 @@ public struct DockerPortBinding: Codable {
     public let privatePort: Int
     public let publicPort: Int?
     public let type: String
-    
+
     enum CodingKeys: String, CodingKey {
         case privatePort = "PrivatePort"
         case publicPort = "PublicPort"
@@ -100,7 +100,7 @@ public struct ContainerInspect: Codable {
     public let state: ContainerState
     public let config: ContainerConfig
     public let networkSettings: NetworkSettings
-    
+
     enum CodingKeys: String, CodingKey {
         case id = "Id"
         case name = "Name"
@@ -123,7 +123,7 @@ public struct ContainerState: Codable {
     public let error: String?
     public let startedAt: String
     public let finishedAt: String
-    
+
     enum CodingKeys: String, CodingKey {
         case status = "Status"
         case running = "Running"
@@ -148,7 +148,7 @@ public struct ContainerConfig: Codable {
     public let entrypoint: [String]?
     public let exposedPorts: [String: [String: String]]?
     public let labels: [String: String]?
-    
+
     enum CodingKeys: String, CodingKey {
         case image = "Image"
         case hostname = "Hostname"
@@ -164,7 +164,7 @@ public struct ContainerConfig: Codable {
 public struct NetworkSettings: Codable {
     public let ports: [String: [PortInfo]?]?
     public let networks: [String: NetworkInfo]?
-    
+
     enum CodingKeys: String, CodingKey {
         case ports = "Ports"
         case networks = "Networks"
@@ -175,7 +175,7 @@ public struct NetworkSettings: Codable {
 public struct PortInfo: Codable {
     public let hostIp: String
     public let hostPort: String
-    
+
     enum CodingKeys: String, CodingKey {
         case hostIp = "HostIp"
         case hostPort = "HostPort"
@@ -189,7 +189,7 @@ public struct NetworkInfo: Codable {
     public let gateway: String
     public let macAddress: String
     public let aliases: [String]?
-    
+
     enum CodingKeys: String, CodingKey {
         case ipAddress = "IPAddress"
         case ipPrefixLen = "IPPrefixLen"
@@ -210,7 +210,7 @@ public struct CreateContainerRequest: Codable {
     public var labels: [String: String]?
     public var portBindings: [String: [PortBindingConfig]]?
     public var networkMode: String?
-    
+
     enum CodingKeys: String, CodingKey {
         case image = "Image"
         case hostname = "Hostname"
@@ -222,7 +222,7 @@ public struct CreateContainerRequest: Codable {
         case portBindings = "PortBindings"
         case networkMode = "NetworkMode"
     }
-    
+
     public init(image: String) {
         self.image = image
     }
@@ -232,12 +232,12 @@ public struct CreateContainerRequest: Codable {
 public struct PortBindingConfig: Codable {
     public let hostIp: String?
     public let hostPort: String?
-    
+
     enum CodingKeys: String, CodingKey {
         case hostIp = "HostIp"
         case hostPort = "HostPort"
     }
-    
+
     public init(hostIp: String? = nil, hostPort: String? = nil) {
         self.hostIp = hostIp
         self.hostPort = hostPort
@@ -250,7 +250,7 @@ public struct DockerNetworkInfo: Codable {
     public let id: String
     public let driver: String
     public let containers: [String: NetworkContainer]?
-    
+
     enum CodingKeys: String, CodingKey {
         case name = "Name"
         case id = "Id"
@@ -265,7 +265,7 @@ public struct NetworkContainer: Codable {
     public let endpointId: String
     public let macAddress: String
     public let ipAddress: String
-    
+
     enum CodingKeys: String, CodingKey {
         case name = "Name"
         case endpointId = "EndpointID"
@@ -277,7 +277,7 @@ public struct NetworkContainer: Codable {
 /// Image pull options
 public struct ImagePullOptions: Codable {
     public let tag: String?
-    
+
     public init(tag: String? = nil) {
         self.tag = tag
     }
@@ -286,7 +286,7 @@ public struct ImagePullOptions: Codable {
 /// Exec instance
 public struct ExecInstance: Codable {
     public let id: String
-    
+
     enum CodingKeys: String, CodingKey {
         case id = "Id"
     }
@@ -296,7 +296,7 @@ public struct ExecInstance: Codable {
 public struct ExecResult: Codable {
     public let exitCode: Int?
     public let output: String?
-    
+
     public init(exitCode: Int? = nil, output: String? = nil) {
         self.exitCode = exitCode
         self.output = output
@@ -321,7 +321,7 @@ public enum ContainerStatus {
     case dead
     /// The container status is unknown.
     case unknown
-    
+
     public init(_ status: String) {
         switch status.lowercased() {
         case "running":
@@ -354,9 +354,9 @@ public struct TestcontainersConfiguration {
     public var tlsVerify: Bool = false
     /// Path to TLS certificates.
     public var tlsCertPath: String?
-    
+
     /// Initializes a new configuration.
-    public init() {}
+    public init() { }
 }
 
 // MARK: - Wait Strategy Result
@@ -381,7 +381,7 @@ public struct PortBinding {
     public let hostPort: Int
     /// The protocol (e.g., "tcp", "udp").
     public let proto: String
-    
+
     /// Initializes a new port binding.
     /// - Parameters:
     ///   - containerPort: The port number inside the container.
@@ -418,29 +418,29 @@ public enum TestcontainersError: LocalizedError {
     case apiError(String)
     /// An operation timed out.
     case timeout
-    
+
     public var errorDescription: String? {
         switch self {
         case .dockerNotAvailable:
-            return "Docker is not available"
+            "Docker is not available"
         case .invalidImage:
-            return "Invalid Docker image"
+            "Invalid Docker image"
         case let .containerNotFound(id):
-            return "Container not found: \(id)"
+            "Container not found: \(id)"
         case let .containerFailed(msg):
-            return "Container failed: \(msg)"
+            "Container failed: \(msg)"
         case let .portMappingFailed(port):
-            return "Port mapping failed for port \(port)"
+            "Port mapping failed for port \(port)"
         case let .waitStrategyFailed(msg):
-            return "Wait strategy failed: \(msg)"
+            "Wait strategy failed: \(msg)"
         case let .networkError(msg):
-            return "Network error: \(msg)"
+            "Network error: \(msg)"
         case let .invalidConfiguration(msg):
-            return "Invalid configuration: \(msg)"
+            "Invalid configuration: \(msg)"
         case let .apiError(msg):
-            return "Docker API error: \(msg)"
+            "Docker API error: \(msg)"
         case .timeout:
-            return "Operation timed out"
+            "Operation timed out"
         }
     }
 }

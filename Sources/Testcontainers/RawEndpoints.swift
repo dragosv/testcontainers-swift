@@ -1,5 +1,5 @@
-import Foundation
 import DockerClientSwift
+import Foundation
 import NIOHTTP1
 
 // MARK: - Raw Inspect Container Endpoint
@@ -11,10 +11,6 @@ struct RawInspectContainerEndpoint: Endpoint {
     var method: HTTPMethod = .GET
 
     let nameOrId: String
-
-    init(nameOrId: String) {
-        self.nameOrId = nameOrId
-    }
 
     var path: String {
         "containers/\(nameOrId)/json"
@@ -80,7 +76,7 @@ struct RawExecStartEndpoint: PipelineEndpoint {
     }
 
     func map(data: String) throws -> String {
-        return data
+        data
     }
 }
 
@@ -164,10 +160,6 @@ struct RawRemoveNetworkEndpoint: Endpoint {
     var method: HTTPMethod = .DELETE
 
     let networkId: String
-
-    init(networkId: String) {
-        self.networkId = networkId
-    }
 
     var path: String {
         "networks/\(networkId)"

@@ -6,4 +6,4 @@ public struct DockerVersion {
     public let os: String
 }
 
-extension DockerVersion: Codable {}
+extension DockerVersion: Codable { }

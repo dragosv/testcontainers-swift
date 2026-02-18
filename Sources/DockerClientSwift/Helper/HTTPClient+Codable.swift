@@ -22,27 +22,26 @@ extension EventLoopFuture where Value == HTTPClient.Response {
     /// - Parameter logger: Logger the message should be logged to.
     /// - Returns: Returnes the original response of the `HTTPClient`.
     func logResponseBody(_ logger: Logger) -> EventLoopFuture<HTTPClient.Response> {
-        self.always({ (result: Result<HTTPClient.Response, Error>) in
+        always { (result: Result<HTTPClient.Response, Error>) in
             logger.debug("Response: \(result.bodyValue() ?? "No Body Data")")
-        })
+        }
     }
 }
 
 extension Result where Success == HTTPClient.Response {
     func bodyValue() -> String? {
-        (try? self.get()).flatMap({ response -> String? in
+        (try? get()).flatMap { response -> String? in
             if let bodyData = response.bodyData {
                 return String(data: bodyData, encoding: .utf8)
             } else {
                 return nil
             }
-        })
+        }
     }
 }
 
-extension EventLoopFuture where Value == HTTPClient.Response {
-
-    public enum BodyError: Swift.Error {
+public extension EventLoopFuture where Value == HTTPClient.Response {
+    enum BodyError: Swift.Error {
         case noBodyData
     }
 
@@ -53,7 +52,7 @@ extension EventLoopFuture where Value == HTTPClient.Response {
     ///     - decoder: The decoder used to decode the reponse body.  Defaults to JSONDecoder.
     /// - returns: A future decoded type.
     /// - throws: BodyError.noBodyData when no body is found in reponse.
-    public func decode<T: Decodable>(as type: T.Type, decoder: Decoder = JSONDecoder())
+    func decode<T: Decodable>(as type: T.Type, decoder: Decoder = JSONDecoder())
         -> EventLoopFuture<T>
     {
         flatMapThrowing { response -> T in
@@ -72,8 +71,8 @@ extension EventLoopFuture where Value == HTTPClient.Response {
         }
     }
 
-    public func mapString<T>(map: @escaping (String) throws -> T) -> EventLoopFuture<T> {
-        flatMapThrowing { (response) -> T in
+    func mapString<T>(map: @escaping (String) throws -> T) -> EventLoopFuture<T> {
+        flatMapThrowing { response -> T in
             try response.checkStatusCode()
             guard let bodyData = response.bodyData else {
                 throw BodyError.noBodyData
@@ -90,8 +89,9 @@ extension EventLoopFuture where Value == HTTPClient.Response {
     /// - parameters:
     ///     - type: The type to decode.  Must conform to Decoable.
     ///     - decoder: The decoder used to decode the reponse body.  Defaults to JSONDecoder.
-    /// - returns: A future optional decoded type.  The future value will be nil when no body is present in the response.
-    public func decode<T: Decodable>(as type: T.Type, decoder: Decoder = JSONDecoder())
+    /// - returns: A future optional decoded type.  The future value will be nil when no body is present in the
+    /// response.
+    func decode<T: Decodable>(as type: T.Type, decoder: Decoder = JSONDecoder())
         -> EventLoopFuture<T?>
     {
         flatMapThrowing { response -> T? in
@@ -106,25 +106,29 @@ extension EventLoopFuture where Value == HTTPClient.Response {
 }
 
 extension HTTPClient.Response {
-
-    /// This function checks the current response fot the status code. If it is not in the range of `200...299` it throws an error
-    /// - Throws: Throws a `DockerError.errorCode` error. If the response is a `MessageResponse` it uses the `message` content for the message, otherwise the body will be used.
+    /// This function checks the current response fot the status code. If it is not in the range of `200...299` it
+    /// throws an error
+    /// - Throws: Throws a `DockerError.errorCode` error. If the response is a `MessageResponse` it uses the `message`
+    /// content for the message, otherwise the body will be used.
     fileprivate func checkStatusCode() throws {
-        guard 200...299 ~= self.status.code else {
-            if let data = self.bodyData, let message = try? MessageResponse.decode(from: data) {
-                throw DockerError.errorCode(Int(self.status.code), message.message)
+        guard 200 ... 299 ~= status.code else {
+            if let data = bodyData, let message = try? MessageResponse.decode(from: data) {
+                throw DockerError.errorCode(Int(status.code), message.message)
             } else {
                 throw DockerError.errorCode(
-                    Int(self.status.code),
-                    self.bodyData.map({ String(data: $0, encoding: .utf8) ?? "" }))
+                    Int(status.code),
+                    bodyData.map { String(data: $0, encoding: .utf8) ?? "" }
+                )
             }
         }
     }
 
     public var bodyData: Data? {
-        guard let bodyBuffer = body,
+        guard
+            let bodyBuffer = body,
             let bodyBytes = bodyBuffer.getBytes(
-                at: bodyBuffer.readerIndex, length: bodyBuffer.readableBytes)
+                at: bodyBuffer.readerIndex, length: bodyBuffer.readableBytes
+            )
         else {
             return nil
         }
@@ -135,7 +139,7 @@ extension HTTPClient.Response {
     /// Logs the response body and returns self for chaining.
     @discardableResult
     func logResponseBody(_ logger: Logger) -> HTTPClient.Response {
-        if let bodyData = self.bodyData, let bodyString = String(data: bodyData, encoding: .utf8) {
+        if let bodyData, let bodyString = String(data: bodyData, encoding: .utf8) {
             logger.debug("Response: \(bodyString)")
         } else {
             logger.debug("Response: No Body Data")
@@ -149,7 +153,7 @@ extension HTTPClient.Response {
         if T.self == NoBody.self || T.self == NoBody?.self {
             return NoBody() as! T
         }
-        guard let bodyData = bodyData else {
+        guard let bodyData else {
             throw EventLoopFuture<HTTPClient.Response>.BodyError.noBodyData
         }
         if T.self == String.self {
@@ -161,7 +165,7 @@ extension HTTPClient.Response {
     /// Map the body string with the given closure.
     func mapString<T>(map: (String) throws -> T) throws -> T {
         try checkStatusCode()
-        guard let bodyData = bodyData else {
+        guard let bodyData else {
             throw EventLoopFuture<HTTPClient.Response>.BodyError.noBodyData
         }
         guard let string = String(data: bodyData, encoding: .utf8) else {
@@ -172,8 +176,8 @@ extension HTTPClient.Response {
 }
 
 public protocol Decoder {
-    func decode<T>(_ type: T.Type, from: Data) throws -> T where T: Decodable
+    func decode<T: Decodable>(_ type: T.Type, from: Data) throws -> T
 }
 
-extension JSONDecoder: Decoder {}
-extension PropertyListDecoder: Decoder {}
+extension JSONDecoder: Decoder { }
+extension PropertyListDecoder: Decoder { }

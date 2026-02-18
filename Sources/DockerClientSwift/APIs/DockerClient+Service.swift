@@ -1,13 +1,12 @@
 import Foundation
 
-extension DockerClient {
-
+public extension DockerClient {
     /// APIs related to services.
-    public var services: ServicesAPI {
+    var services: ServicesAPI {
         .init(client: self)
     }
 
-    public struct ServicesAPI {
+    struct ServicesAPI {
         fileprivate var client: DockerClient
 
         /// Lists all services running in the Docker instance.
@@ -28,8 +27,10 @@ extension DockerClient {
             _ = try await client.run(
                 UpdateServiceEndpoint(
                     nameOrId: service.id.value, name: service.name, version: service.version,
-                    image: newImage.id.value))
-            return try await self.get(serviceByNameOrId: service.id.value)
+                    image: newImage.id.value
+                )
+            )
+            return try await get(serviceByNameOrId: service.id.value)
         }
 
         /// Gets a service by a given name or id.
@@ -49,7 +50,8 @@ extension DockerClient {
         /// - Returns: Returns the newly created `Service`.
         public func create(serviceName name: String, image: Image) async throws -> Service {
             let serviceId = try await client.run(
-                CreateServiceEndpoint(name: name, image: image.id.value))
+                CreateServiceEndpoint(name: name, image: image.id.value)
+            )
             let service = try await client.run(InspectServiceEndpoint(nameOrId: serviceId.ID))
             return service.toService()
         }
@@ -57,14 +59,14 @@ extension DockerClient {
 }
 
 extension Service.ServiceResponse {
-
     /// Internal function that converts the response from Docker to the DockerClient representation.
     /// - Returns: Returns an instance of `Service` with the values of the current response.
-    internal func toService() -> Service {
+    func toService() -> Service {
         Service(
-            id: .init(self.ID), name: self.Spec.Name,
-            createdAt: Date.parseDockerDate(self.CreatedAt),
-            updatedAt: Date.parseDockerDate(self.UpdatedAt), version: self.Version.Index,
-            image: Image(id: Identifier(self.Spec.TaskTemplate.ContainerSpec.Image)))
+            id: .init(ID), name: Spec.Name,
+            createdAt: Date.parseDockerDate(CreatedAt),
+            updatedAt: Date.parseDockerDate(UpdatedAt), version: Version.Index,
+            image: Image(id: Identifier(Spec.TaskTemplate.ContainerSpec.Image))
+        )
     }
 }

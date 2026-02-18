@@ -1,4 +1,4 @@
-// swift-tools-version:6.2
+// swift-tools-version:6.1
 import PackageDescription
 
 let package = Package(
@@ -7,7 +7,7 @@ let package = Package(
         .macOS(.v13),
         .iOS(.v16),
         .tvOS(.v16),
-        .watchOS(.v9)
+        .watchOS(.v9),
     ],
     products: [
         .library(name: "Testcontainers", targets: ["Testcontainers"]),
@@ -15,7 +15,7 @@ let package = Package(
     dependencies: [
         .package(url: "https://github.com/apple/swift-nio.git", from: "2.94.1"),
         .package(url: "https://github.com/swift-server/async-http-client.git", from: "1.31.0"),
-        .package(url: "https://github.com/apple/swift-log.git", from: "1.4.0")
+        .package(url: "https://github.com/apple/swift-log.git", from: "1.4.0"),
     ],
     targets: [
         .target(

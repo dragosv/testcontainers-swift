@@ -11,7 +11,7 @@ public class DockerNetworkImpl {
     /// The network driver.
     public let driver: String
     private let client: DockerClient
-    
+
     /// Initializes a new Docker network implementation.
     /// - Parameters:
     ///   - id: The network ID.
@@ -24,21 +24,21 @@ public class DockerNetworkImpl {
         self.driver = driver
         self.client = client
     }
-    
+
     /// Connects a container to this network.
     /// - Parameter id: The container ID.
     /// - Throws: An error if connecting fails.
     public func connectContainer(id: String) async throws {
         try await client.connectNetwork(networkId: self.id, containerId: id)
     }
-    
+
     /// Disconnects a container from this network.
     /// - Parameter id: The container ID.
     /// - Throws: An error if disconnecting fails.
     public func disconnectContainer(id: String) async throws {
         try await client.disconnectNetwork(networkId: self.id, containerId: id)
     }
-    
+
     /// Deletes the network.
     /// - Throws: An error if deleting the network fails.
     public func delete() async throws {
@@ -55,14 +55,14 @@ public class NetworkBuilder {
     private var driver: String = "bridge"
     private var Internal: Bool = false
     private let client: DockerClient
-    
+
     /// Initializes a new network builder.
     /// - Parameter name: The network name.
     public init(_ name: String) {
         self.name = name
         self.client = DockerClient.getInstance()
     }
-    
+
     /// Sets the network driver.
     /// - Parameter driver: The driver name.
     /// - Returns: The builder instance for chaining.
@@ -71,16 +71,16 @@ public class NetworkBuilder {
         self.driver = driver
         return self
     }
-    
+
     /// Sets whether the network is internal.
     /// - Parameter internal: Whether the network is internal.
     /// - Returns: The builder instance for chaining.
     @discardableResult
     public func withInternal(_ internal: Bool) -> NetworkBuilder {
-        self.Internal = `internal`
+        Internal = `internal`
         return self
     }
-    
+
     /// Builds and creates the network.
     /// - Returns: A Docker network instance.
     /// - Throws: An error if network creation fails.

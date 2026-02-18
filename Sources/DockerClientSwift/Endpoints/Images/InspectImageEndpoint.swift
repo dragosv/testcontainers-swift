@@ -4,17 +4,13 @@ struct InspectImagesEndpoint: Endpoint {
     typealias Body = NoBody
     typealias Response = ImageResponse
     var method: HTTPMethod = .GET
-    
+
     let nameOrId: String
-    
-    init(nameOrId: String) {
-        self.nameOrId = nameOrId
-    }
-    
+
     var path: String {
         "images/\(nameOrId)/json"
     }
-    
+
     struct ImageResponse: Codable {
         let Id: String
         let Parent: String

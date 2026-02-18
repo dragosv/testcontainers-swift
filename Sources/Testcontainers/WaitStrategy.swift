@@ -20,7 +20,7 @@ public protocol WaitStrategy {
 /// A wait strategy that performs no waiting.
 public struct NoWaitStrategy: WaitStrategy {
     /// Initializes a new no-wait strategy.
-    public init() {}
+    public init() { }
 
     /// Does nothing, as no waiting is required.
     /// - Parameters:
@@ -43,7 +43,7 @@ public struct HttpWaitStrategy: WaitStrategy {
     public let timeout: TimeInterval
     /// The number of retries.
     public let retries: Int
-    
+
     /// Initializes a new HTTP wait strategy.
     /// - Parameters:
     ///   - port: The port to check.
@@ -56,15 +56,15 @@ public struct HttpWaitStrategy: WaitStrategy {
         path: String = "/",
         scheme: String = "http",
         timeout: TimeInterval = 60,
-        retries: Int = 5
-    ) {
+        retries: Int = 5)
+    {
         self.port = port
         self.path = path
         self.scheme = scheme
         self.timeout = timeout
         self.retries = retries
     }
-    
+
     /// Waits until the HTTP endpoint returns a successful response.
     /// - Parameters:
     ///   - container: The container to wait for.
@@ -73,30 +73,30 @@ public struct HttpWaitStrategy: WaitStrategy {
     public func waitUntilReady(container: Container, client: DockerClient) async throws {
         let startTime = Date()
         var lastError: Error?
-        
-        for _ in 0..<retries {
+
+        for _ in 0 ..< retries {
             if Date().timeIntervalSince(startTime) > timeout {
                 throw TestcontainersError.timeout
             }
-            
+
             do {
                 guard let host = container.ipAddress ?? container.host else {
                     throw TestcontainersError.invalidConfiguration("No host available")
                 }
-                
+
                 let mappedPort = try container.getMappedPort(port)
                 let urlString = "\(scheme)://\(host):\(mappedPort)\(path)"
-                
+
                 guard let url = URL(string: urlString) else {
                     throw TestcontainersError.invalidConfiguration("Invalid URL: \(urlString)")
                 }
-                
+
                 var request = URLRequest(url: url)
                 request.timeoutInterval = 5
-                
+
                 let (_, response) = try await URLSession.shared.data(for: request)
-                
-                if let httpResponse = response as? HTTPURLResponse, (200..<300).contains(httpResponse.statusCode) {
+
+                if let httpResponse = response as? HTTPURLResponse, (200 ..< 300).contains(httpResponse.statusCode) {
                     return
                 }
             } catch {
@@ -105,7 +105,7 @@ public struct HttpWaitStrategy: WaitStrategy {
                 continue
             }
         }
-        
+
         throw lastError ?? TestcontainersError.waitStrategyFailed("HTTP endpoint not available on port \(port)")
     }
 }
@@ -118,7 +118,7 @@ public struct TcpWaitStrategy: WaitStrategy {
     public let timeout: TimeInterval
     /// The number of retries.
     public let retries: Int
-    
+
     /// Initializes a new TCP wait strategy.
     /// - Parameters:
     ///   - port: The port to check.
@@ -129,7 +129,7 @@ public struct TcpWaitStrategy: WaitStrategy {
         self.timeout = timeout
         self.retries = retries
     }
-    
+
     /// Waits until the TCP port is available.
     /// - Parameters:
     ///   - container: The container to wait for.
@@ -137,17 +137,17 @@ public struct TcpWaitStrategy: WaitStrategy {
     /// - Throws: An error if the wait times out or fails.
     public func waitUntilReady(container: Container, client: DockerClient) async throws {
         let startTime = Date()
-        
-        for _ in 0..<retries {
+
+        for _ in 0 ..< retries {
             if Date().timeIntervalSince(startTime) > timeout {
                 throw TestcontainersError.timeout
             }
-            
+
             do {
                 guard let host = container.ipAddress ?? container.host else {
                     throw TestcontainersError.invalidConfiguration("No host available")
                 }
-                
+
                 let mappedPort = try container.getMappedPort(port)
                 try await checkTcpConnection(host: host, port: mappedPort, timeout: 5)
                 return
@@ -156,21 +156,21 @@ public struct TcpWaitStrategy: WaitStrategy {
                 continue
             }
         }
-        
+
         throw TestcontainersError.waitStrategyFailed("TCP port \(port) not available")
     }
-    
+
     private func checkTcpConnection(host: String, port: Int, timeout: TimeInterval) async throws {
         // Simplified TCP check using URLSession
         let urlString = "http://\(host):\(port)"
         guard let url = URL(string: urlString) else {
             throw TestcontainersError.invalidConfiguration("Invalid host/port")
         }
-        
+
         var request = URLRequest(url: url)
         request.httpMethod = "HEAD"
         request.timeoutInterval = timeout
-        
+
         _ = try await URLSession.shared.data(for: request)
     }
 }
@@ -181,7 +181,7 @@ public struct LogWaitStrategy: WaitStrategy {
     public let message: String
     /// The maximum time to wait.
     public let timeout: TimeInterval
-    
+
     /// Initializes a new log wait strategy.
     /// - Parameters:
     ///   - message: The message to look for.
@@ -190,7 +190,7 @@ public struct LogWaitStrategy: WaitStrategy {
         self.message = message
         self.timeout = timeout
     }
-    
+
     /// Waits until the specified message appears in the container logs.
     /// - Parameters:
     ///   - container: The container to wait for.
@@ -198,17 +198,17 @@ public struct LogWaitStrategy: WaitStrategy {
     /// - Throws: An error if the wait times out or fails.
     public func waitUntilReady(container: Container, client: DockerClient) async throws {
         let startTime = Date()
-        
+
         while Date().timeIntervalSince(startTime) < timeout {
             let logs = try await client.getContainerLogs(containerId: container.id)
-            
+
             if logs.contains(message) {
                 return
             }
-            
+
             try await Task.sleep(nanoseconds: 500_000_000) // 0.5 second delay
         }
-        
+
         throw TestcontainersError.waitStrategyFailed("Log message not found: \(message)")
     }
 }
@@ -219,7 +219,7 @@ public struct ExecWaitStrategy: WaitStrategy {
     public let command: [String]
     /// The maximum time to wait.
     public let timeout: TimeInterval
-    
+
     /// Initializes a new exec wait strategy.
     /// - Parameters:
     ///   - command: The command to execute.
@@ -228,7 +228,7 @@ public struct ExecWaitStrategy: WaitStrategy {
         self.command = command
         self.timeout = timeout
     }
-    
+
     /// Waits until the command executes successfully inside the container.
     /// - Parameters:
     ///   - container: The container to wait for.
@@ -236,7 +236,7 @@ public struct ExecWaitStrategy: WaitStrategy {
     /// - Throws: An error if the wait times out or fails.
     public func waitUntilReady(container: Container, client: DockerClient) async throws {
         let startTime = Date()
-        
+
         while Date().timeIntervalSince(startTime) < timeout {
             do {
                 let exec = try await client.execCreate(
@@ -244,17 +244,17 @@ public struct ExecWaitStrategy: WaitStrategy {
                     cmd: command
                 )
                 let output = try await client.execStart(execId: exec.id)
-                
+
                 if !output.isEmpty {
                     return
                 }
             } catch {
                 // Continue trying
             }
-            
+
             try await Task.sleep(nanoseconds: 500_000_000) // 0.5 second delay
         }
-        
+
         throw TestcontainersError.waitStrategyFailed("Exec command failed: \(command.joined(separator: " "))")
     }
 }
@@ -263,13 +263,13 @@ public struct ExecWaitStrategy: WaitStrategy {
 public struct HealthCheckWaitStrategy: WaitStrategy {
     /// The maximum time to wait.
     public let timeout: TimeInterval
-    
+
     /// Initializes a new health check wait strategy.
     /// - Parameter timeout: The timeout in seconds, defaults to 60.
     public init(timeout: TimeInterval = 60) {
         self.timeout = timeout
     }
-    
+
     /// Waits until the container's health check status is "healthy".
     /// - Parameters:
     ///   - container: The container to wait for.
@@ -277,21 +277,21 @@ public struct HealthCheckWaitStrategy: WaitStrategy {
     /// - Throws: An error if the wait times out or fails.
     public func waitUntilReady(container: Container, client: DockerClient) async throws {
         let startTime = Date()
-        
+
         while Date().timeIntervalSince(startTime) < timeout {
             let inspect = try await client.inspectContainer(id: container.id)
-            
+
             if inspect.state.status.lowercased() == "healthy" {
                 return
             }
-            
+
             if inspect.state.status.lowercased() == "unhealthy" {
                 throw TestcontainersError.waitStrategyFailed("Container is unhealthy")
             }
-            
+
             try await Task.sleep(nanoseconds: 500_000_000) // 0.5 second delay
         }
-        
+
         throw TestcontainersError.timeout
     }
 }
@@ -300,13 +300,13 @@ public struct HealthCheckWaitStrategy: WaitStrategy {
 public struct CombinedWaitStrategy: WaitStrategy {
     /// The strategies to combine.
     public let strategies: [WaitStrategy]
-    
+
     /// Initializes a new combined wait strategy.
     /// - Parameter strategies: The wait strategies to combine.
     public init(_ strategies: [WaitStrategy]) {
         self.strategies = strategies
     }
-    
+
     /// Waits until all combined strategies are ready.
     /// - Parameters:
     ///   - container: The container to wait for.
@@ -328,7 +328,7 @@ public class Wait {
     public static func noWait() -> WaitStrategy {
         NoWaitStrategy()
     }
-    
+
     /// Creates an HTTP wait strategy.
     /// - Parameters:
     ///   - port: The port to check.
@@ -340,11 +340,12 @@ public class Wait {
         port: Int,
         path: String = "/",
         scheme: String = "http",
-        timeout: TimeInterval = 60
-    ) -> WaitStrategy {
+        timeout: TimeInterval = 60)
+        -> WaitStrategy
+    {
         HttpWaitStrategy(port: port, path: path, scheme: scheme, timeout: timeout)
     }
-    
+
     /// Creates a TCP wait strategy.
     /// - Parameters:
     ///   - port: The port to check.
@@ -353,7 +354,7 @@ public class Wait {
     public static func tcp(port: Int, timeout: TimeInterval = 60) -> WaitStrategy {
         TcpWaitStrategy(port: port, timeout: timeout)
     }
-    
+
     /// Creates a log wait strategy.
     /// - Parameters:
     ///   - message: The message to look for.
@@ -362,7 +363,7 @@ public class Wait {
     public static func log(message: String, timeout: TimeInterval = 60) -> WaitStrategy {
         LogWaitStrategy(message: message, timeout: timeout)
     }
-    
+
     /// Creates an exec wait strategy.
     /// - Parameters:
     ///   - command: The command to execute.
@@ -371,14 +372,14 @@ public class Wait {
     public static func exec(command: [String], timeout: TimeInterval = 60) -> WaitStrategy {
         ExecWaitStrategy(command: command, timeout: timeout)
     }
-    
+
     /// Creates a health check wait strategy.
     /// - Parameter timeout: The timeout in seconds, defaults to 60.
     /// - Returns: A health check wait strategy.
     public static func healthCheck(timeout: TimeInterval = 60) -> WaitStrategy {
         HealthCheckWaitStrategy(timeout: timeout)
     }
-    
+
     /// Creates a combined wait strategy.
     /// - Parameter strategies: The wait strategies to combine.
     /// - Returns: A combined wait strategy.
@@ -392,13 +393,13 @@ public class Wait {
 /// A wait strategy that allows custom logic via a closure.
 public struct CustomWaitStrategy: WaitStrategy {
     private let closure: (Container, DockerClient) async throws -> Void
-    
+
     /// Initializes a new custom wait strategy.
     /// - Parameter closure: The closure to execute for waiting.
     public init(closure: @escaping (Container, DockerClient) async throws -> Void) {
         self.closure = closure
     }
-    
+
     /// Executes the custom wait logic.
     /// - Parameters:
     ///   - container: The container to wait for.

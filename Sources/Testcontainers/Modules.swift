@@ -10,7 +10,7 @@ public class PostgresContainer {
     private var password: String = "postgres"
     private var port: Int = 5432
     private var version: String = "latest"
-    
+
     /// Initializes a new PostgreSQL container.
     /// - Parameter version: The PostgreSQL version, defaults to "latest".
     public init(version: String = "latest") {
@@ -21,7 +21,7 @@ public class PostgresContainer {
             .withPortBinding(port, assignRandomHostPort: true)
             .withEnvironment("POSTGRES_PASSWORD", "postgres")
     }
-    
+
     /// Sets the database name.
     /// - Parameter database: The database name.
     /// - Returns: The container instance for chaining.
@@ -31,7 +31,7 @@ public class PostgresContainer {
         builder.withEnvironment("POSTGRES_DB", database)
         return self
     }
-    
+
     /// Sets the username.
     /// - Parameter username: The username.
     /// - Returns: The container instance for chaining.
@@ -41,7 +41,7 @@ public class PostgresContainer {
         builder.withEnvironment("POSTGRES_USER", username)
         return self
     }
-    
+
     /// Sets the password.
     /// - Parameter password: The password.
     /// - Returns: The container instance for chaining.
@@ -51,7 +51,7 @@ public class PostgresContainer {
         builder.withEnvironment("POSTGRES_PASSWORD", password)
         return self
     }
-    
+
     /// Starts the PostgreSQL container.
     /// - Returns: A reference to the started container.
     /// - Throws: An error if starting the container fails.
@@ -64,9 +64,9 @@ public class PostgresContainer {
                 )
             )
             .buildAsync()
-        
+
         try await container.start()
-        
+
         return PostgresContainerReference(
             container: container,
             database: database,
@@ -89,7 +89,7 @@ public class PostgresContainerReference: @unchecked Sendable {
     public let password: String
     /// The port number.
     public let port: Int
-    
+
     /// Initializes a new PostgreSQL container reference.
     /// - Parameters:
     ///   - container: The container.
@@ -102,15 +102,15 @@ public class PostgresContainerReference: @unchecked Sendable {
         database: String,
         username: String,
         password: String,
-        port: Int
-    ) {
+        port: Int)
+    {
         self.container = container
         self.database = database
         self.username = username
         self.password = password
         self.port = port
     }
-    
+
     /// Gets the PostgreSQL connection string.
     /// - Returns: The connection string.
     /// - Throws: An error if the port mapping is not found.
@@ -119,13 +119,13 @@ public class PostgresContainerReference: @unchecked Sendable {
         let mappedPort = try container.getMappedPort(port)
         return "postgresql://\(username):\(password)@\(host):\(mappedPort)/\(database)"
     }
-    
+
     /// Stops the container.
     /// - Throws: An error if stopping the container fails.
     public func stop() async throws {
         try await container.stop(timeout: 10)
     }
-    
+
     /// Deletes the container.
     /// - Throws: An error if deleting the container fails.
     public func delete() async throws {
@@ -143,7 +143,7 @@ public class MySqlContainer {
     private var password: String = "root"
     private var port: Int = 3306
     private var version: String = "latest"
-    
+
     /// Initializes a new MySQL container.
     /// - Parameter version: The MySQL version, defaults to "latest".
     public init(version: String = "latest") {
@@ -154,7 +154,7 @@ public class MySqlContainer {
             .withPortBinding(port, assignRandomHostPort: true)
             .withEnvironment("MYSQL_ROOT_PASSWORD", "root")
     }
-    
+
     /// Sets the database name.
     /// - Parameter database: The database name.
     /// - Returns: The container instance for chaining.
@@ -164,7 +164,7 @@ public class MySqlContainer {
         builder.withEnvironment("MYSQL_DATABASE", database)
         return self
     }
-    
+
     /// Sets the username.
     /// - Parameter username: The username.
     /// - Returns: The container instance for chaining.
@@ -174,7 +174,7 @@ public class MySqlContainer {
         builder.withEnvironment("MYSQL_USER", username)
         return self
     }
-    
+
     /// Sets the password.
     /// - Parameter password: The password.
     /// - Returns: The container instance for chaining.
@@ -187,7 +187,7 @@ public class MySqlContainer {
         }
         return self
     }
-    
+
     /// Starts the MySQL container.
     /// - Returns: A reference to the started container.
     /// - Throws: An error if starting the container fails.
@@ -200,9 +200,9 @@ public class MySqlContainer {
                 )
             )
             .buildAsync()
-        
+
         try await container.start()
-        
+
         return MySqlContainerReference(
             container: container,
             database: database,
@@ -225,7 +225,7 @@ public class MySqlContainerReference: @unchecked Sendable {
     public let password: String
     /// The port number.
     public let port: Int
-    
+
     /// Initializes a new MySQL container reference.
     /// - Parameters:
     ///   - container: The container.
@@ -238,15 +238,15 @@ public class MySqlContainerReference: @unchecked Sendable {
         database: String,
         username: String,
         password: String,
-        port: Int
-    ) {
+        port: Int)
+    {
         self.container = container
         self.database = database
         self.username = username
         self.password = password
         self.port = port
     }
-    
+
     /// Gets the MySQL connection string.
     /// - Returns: The connection string.
     /// - Throws: An error if the port mapping is not found.
@@ -255,13 +255,13 @@ public class MySqlContainerReference: @unchecked Sendable {
         let mappedPort = try container.getMappedPort(port)
         return "mysql://\(username):\(password)@\(host):\(mappedPort)/\(database)"
     }
-    
+
     /// Stops the container.
     /// - Throws: An error if stopping the container fails.
     public func stop() async throws {
         try await container.stop(timeout: 10)
     }
-    
+
     /// Deletes the container.
     /// - Throws: An error if deleting the container fails.
     public func delete() async throws {
@@ -276,7 +276,7 @@ public class RedisContainer {
     private let builder: ContainerBuilder
     private var port: Int = 6379
     private var version: String = "latest"
-    
+
     /// Initializes a new Redis container.
     /// - Parameter version: The Redis version, defaults to "latest".
     public init(version: String = "latest") {
@@ -286,7 +286,7 @@ public class RedisContainer {
             .withName("redis-\(UUID().uuidString)")
             .withPortBinding(port, assignRandomHostPort: true)
     }
-    
+
     /// Starts the Redis container.
     /// - Returns: A reference to the started container.
     /// - Throws: An error if starting the container fails.
@@ -296,9 +296,9 @@ public class RedisContainer {
                 Wait.http(port: port, timeout: 60)
             )
             .buildAsync()
-        
+
         try await container.start()
-        
+
         return RedisContainerReference(
             container: container,
             port: port
@@ -312,7 +312,7 @@ public class RedisContainerReference: @unchecked Sendable {
     public let container: Container
     /// The port number.
     public let port: Int
-    
+
     /// Initializes a new Redis container reference.
     /// - Parameters:
     ///   - container: The container.
@@ -321,7 +321,7 @@ public class RedisContainerReference: @unchecked Sendable {
         self.container = container
         self.port = port
     }
-    
+
     /// Gets the Redis URL.
     /// - Returns: The Redis URL.
     /// - Throws: An error if the port mapping is not found.
@@ -330,13 +330,13 @@ public class RedisContainerReference: @unchecked Sendable {
         let mappedPort = try container.getMappedPort(port)
         return "redis://\(host):\(mappedPort)"
     }
-    
+
     /// Stops the container.
     /// - Throws: An error if stopping the container fails.
     public func stop() async throws {
         try await container.stop(timeout: 10)
     }
-    
+
     /// Deletes the container.
     /// - Throws: An error if deleting the container fails.
     public func delete() async throws {
@@ -353,7 +353,7 @@ public class MongoDbContainer {
     private var initdbRootPassword: String = "admin"
     private var port: Int = 27017
     private var version: String = "latest"
-    
+
     /// Initializes a new MongoDB container.
     /// - Parameter version: The MongoDB version, defaults to "latest".
     public init(version: String = "latest") {
@@ -365,27 +365,27 @@ public class MongoDbContainer {
             .withEnvironment("MONGO_INITDB_ROOT_USERNAME", "admin")
             .withEnvironment("MONGO_INITDB_ROOT_PASSWORD", "admin")
     }
-    
+
     /// Sets the username.
     /// - Parameter username: The username.
     /// - Returns: The container instance for chaining.
     @discardableResult
     public func withUsername(_ username: String) -> MongoDbContainer {
-        self.initdbRootUsername = username
+        initdbRootUsername = username
         builder.withEnvironment("MONGO_INITDB_ROOT_USERNAME", username)
         return self
     }
-    
+
     /// Sets the password.
     /// - Parameter password: The password.
     /// - Returns: The container instance for chaining.
     @discardableResult
     public func withPassword(_ password: String) -> MongoDbContainer {
-        self.initdbRootPassword = password
+        initdbRootPassword = password
         builder.withEnvironment("MONGO_INITDB_ROOT_PASSWORD", password)
         return self
     }
-    
+
     /// Starts the MongoDB container.
     /// - Returns: A reference to the started container.
     /// - Throws: An error if starting the container fails.
@@ -395,9 +395,9 @@ public class MongoDbContainer {
                 Wait.http(port: port, timeout: 60)
             )
             .buildAsync()
-        
+
         try await container.start()
-        
+
         return MongoDbContainerReference(
             container: container,
             username: initdbRootUsername,
@@ -417,7 +417,7 @@ public class MongoDbContainerReference: @unchecked Sendable {
     public let password: String
     /// The port number.
     public let port: Int
-    
+
     /// Initializes a new MongoDB container reference.
     /// - Parameters:
     ///   - container: The container.
@@ -428,14 +428,14 @@ public class MongoDbContainerReference: @unchecked Sendable {
         container: Container,
         username: String,
         password: String,
-        port: Int
-    ) {
+        port: Int)
+    {
         self.container = container
         self.username = username
         self.password = password
         self.port = port
     }
-    
+
     /// Gets the MongoDB connection string.
     /// - Returns: The connection string.
     /// - Throws: An error if the port mapping is not found.
@@ -444,13 +444,13 @@ public class MongoDbContainerReference: @unchecked Sendable {
         let mappedPort = try container.getMappedPort(port)
         return "mongodb://\(username):\(password)@\(host):\(mappedPort)/"
     }
-    
+
     /// Stops the container.
     /// - Throws: An error if stopping the container fails.
     public func stop() async throws {
         try await container.stop(timeout: 10)
     }
-    
+
     /// Deletes the container.
     /// - Throws: An error if deleting the container fails.
     public func delete() async throws {

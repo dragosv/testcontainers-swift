@@ -16,4 +16,4 @@ extension Identifier: ExpressibleByStringLiteral {
 
 extension Identifier: Equatable { }
 
-extension Identifier: Codable {}
+extension Identifier: Codable { }

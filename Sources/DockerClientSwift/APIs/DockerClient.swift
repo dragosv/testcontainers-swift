@@ -8,7 +8,7 @@ import NIOHTTP1
 public class DockerClient {
     private let daemonSocket: String
     private let client: HTTPClient
-    internal let logger: Logger
+    let logger: Logger
 
     /// Initialize the `DockerClient`.
     /// - Parameters:
@@ -18,8 +18,8 @@ public class DockerClient {
     public init(
         daemonSocket: String = "/var/run/docker.sock",
         client: HTTPClient = HTTPClient(eventLoopGroupProvider: .singleton),
-        logger: Logger = .init(label: "docker-client")
-    ) {
+        logger: Logger = .init(label: "docker-client"))
+    {
         self.daemonSocket = daemonSocket
         self.client = client
         self.logger = logger
@@ -43,7 +43,8 @@ public class DockerClient {
         let response = try await client.execute(
             endpoint.method, socketPath: daemonSocket, urlPath: "/v1.44/\(endpoint.path)",
             body: endpoint.body.map { HTTPClient.Body.data(try! $0.encode()) }, logger: logger,
-            headers: HTTPHeaders([("Content-Type", "application/json"), ("Host", "localhost")]))
+            headers: HTTPHeaders([("Content-Type", "application/json"), ("Host", "localhost")])
+        )
         response.logResponseBody(logger)
         return try response.decode(as: T.Response.self)
     }
@@ -56,7 +57,8 @@ public class DockerClient {
         let response = try await client.execute(
             endpoint.method, socketPath: daemonSocket, urlPath: "/v1.44/\(endpoint.path)",
             body: endpoint.body.map { HTTPClient.Body.data(try! $0.encode()) }, logger: logger,
-            headers: HTTPHeaders([("Content-Type", "application/json"), ("Host", "localhost")]))
+            headers: HTTPHeaders([("Content-Type", "application/json"), ("Host", "localhost")])
+        )
         response.logResponseBody(logger)
         return try response.mapString(map: endpoint.map(data:))
     }

@@ -1,7 +1,6 @@
 import Foundation
 
 extension Date {
-
     /// Some API results contain dates in a specific date format.
     /// Supports various Docker-style date formats with different fractional second precisions.
     /// - Parameter string: String of the date to parse.

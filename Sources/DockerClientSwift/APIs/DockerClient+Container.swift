@@ -1,13 +1,12 @@
 import Foundation
 
-extension DockerClient {
-
+public extension DockerClient {
     /// APIs related to containers.
-    public var containers: ContainersAPI {
+    var containers: ContainersAPI {
         .init(client: self)
     }
 
-    public struct ContainersAPI {
+    struct ContainersAPI {
         fileprivate var client: DockerClient
 
         /// Fetches all containers in the Docker system.
@@ -26,15 +25,18 @@ extension DockerClient {
                 }
                 let image = Image(
                     id: .init(container.ImageID), digest: digest,
-                    repositoryTags: repositoryTag.map({ [$0] }), createdAt: nil)
+                    repositoryTags: repositoryTag.map { [$0] }, createdAt: nil
+                )
                 return Container(
                     id: .init(container.Id), image: image,
                     createdAt: Date(timeIntervalSince1970: TimeInterval(container.Created)),
-                    names: container.Names, state: container.State, command: container.Command)
+                    names: container.Names, state: container.State, command: container.Command
+                )
             }
         }
 
-        /// Creates a new container from a given image. If specified the commands override the default commands from the image.
+        /// Creates a new container from a given image. If specified the commands override the default commands from the
+        /// image.
         /// - Parameters:
         ///   - image: Instance of an `Image`.
         ///   - commands: Override the default commands from the image. Default `nil`.
@@ -42,8 +44,9 @@ extension DockerClient {
         /// - Throws: Errors that can occur when executing the request.
         /// - Returns: Returns the created `Container`.
         public func createContainer(
-            image: Image, commands: [String]? = nil, portBindings: [PortBinding] = []
-        ) async throws -> Container {
+            image: Image, commands: [String]? = nil, portBindings: [PortBinding] = []) async throws
+            -> Container
+        {
             let hostConfig: CreateContainerEndpoint.CreateContainerBody.HostConfig?
             let exposedPorts: [String: CreateContainerEndpoint.CreateContainerBody.Empty]?
             if portBindings.isEmpty {
@@ -54,9 +57,9 @@ extension DockerClient {
                     [String: CreateContainerEndpoint.CreateContainerBody.Empty] = [:]
                 var portBindingsByContainerPort:
                     [String: [CreateContainerEndpoint.CreateContainerBody.HostConfig.PortBinding]] =
-                        [:]
+                    [:]
                 for portBinding in portBindings {
-                    let containerPort: String =
+                    let containerPort =
                         "\(portBinding.containerPort)/\(portBinding.networkProtocol)"
 
                     exposedPortsBuilder[containerPort] = CreateContainerEndpoint.CreateContainerBody
@@ -64,18 +67,23 @@ extension DockerClient {
                     var hostAddresses = portBindingsByContainerPort[containerPort, default: []]
                     hostAddresses.append(
                         CreateContainerEndpoint.CreateContainerBody.HostConfig.PortBinding(
-                            HostIp: "\(portBinding.hostIP)", HostPort: "\(portBinding.hostPort)"))
+                            HostIp: "\(portBinding.hostIP)", HostPort: "\(portBinding.hostPort)"
+                        )
+                    )
                     portBindingsByContainerPort[containerPort] = hostAddresses
                 }
                 exposedPorts = exposedPortsBuilder
                 hostConfig = CreateContainerEndpoint.CreateContainerBody.HostConfig(
-                    PortBindings: portBindingsByContainerPort)
+                    PortBindings: portBindingsByContainerPort
+                )
             }
             let response = try await client.run(
                 CreateContainerEndpoint(
                     imageName: image.id.value, commands: commands, exposedPorts: exposedPorts,
-                    hostConfig: hostConfig))
-            return try await self.get(containerByNameOrId: response.Id)
+                    hostConfig: hostConfig
+                )
+            )
+            return try await get(containerByNameOrId: response.Id)
         }
 
         /// Starts a container. Before starting it needs to be created.
@@ -85,13 +93,15 @@ extension DockerClient {
         public func start(container: Container) async throws -> [PortBinding] {
             _ = try await client.run(StartContainerEndpoint(containerId: container.id.value))
             let response = try await client.run(
-                InspectContainerEndpoint(nameOrId: container.id.value))
-            return try response.NetworkSettings.Ports.flatMap { (containerPortSpec, bindings) in
+                InspectContainerEndpoint(nameOrId: container.id.value)
+            )
+            return try response.NetworkSettings.Ports.flatMap { containerPortSpec, bindings in
                 let containerPortParts = containerPortSpec.split(separator: "/", maxSplits: 2)
                 guard
-                    let containerPort: UInt16 = UInt16(containerPortParts[0]),
-                    let networkProtocol: NetworkProtocol = NetworkProtocol(
-                        rawValue: String(containerPortParts[1]))
+                    let containerPort = UInt16(containerPortParts[0]),
+                    let networkProtocol = NetworkProtocol(
+                        rawValue: String(containerPortParts[1])
+                    )
                 else {
                     throw DockerError.message(
                         #"unable to parse port/protocol from NetworkSettings.Ports key - "\#(containerPortSpec)""#
@@ -109,7 +119,8 @@ extension DockerClient {
 
                     return PortBinding(
                         hostIP: binding.HostIp, hostPort: hostPort, containerPort: containerPort,
-                        networkProtocol: networkProtocol)
+                        networkProtocol: networkProtocol
+                    )
                 }
             }
         }
@@ -134,13 +145,14 @@ extension DockerClient {
         /// - Returns: Returns the logs as a plain text `String`.
         public func logs(container: Container) async throws -> String {
             let response = try await client.run(
-                GetContainerLogsEndpoint(containerId: container.id.value))
+                GetContainerLogsEndpoint(containerId: container.id.value)
+            )
             return response.split(separator: "\n")
-                .map({ originalLine in
+                .map { originalLine in
                     var line = originalLine
                     line.removeFirst(8)
                     return String(line)
-                })
+                }
                 .joined(separator: "\n")
         }
 
@@ -159,12 +171,14 @@ extension DockerClient {
             }
             let image = Image(
                 id: .init(response.Image), digest: digest,
-                repositoryTags: repositoryTag.map({ [$0] }), createdAt: nil)
+                repositoryTags: repositoryTag.map { [$0] }, createdAt: nil
+            )
             return Container(
                 id: .init(response.Id), image: image,
                 createdAt: Date.parseDockerDate(response.Created)!, names: [response.Name],
                 state: response.State.Status,
-                command: (response.Config.Cmd ?? []).joined(separator: " "))
+                command: (response.Config.Cmd ?? []).joined(separator: " ")
+            )
         }
 
         /// Deletes all stopped containers.
@@ -173,8 +187,9 @@ extension DockerClient {
         public func prune() async throws -> PrunedContainers {
             let response = try await client.run(PruneContainersEndpoint())
             return PrunedContainers(
-                containersIds: response.ContainersDeleted?.map({ .init($0) }) ?? [],
-                reclaimedSpace: response.SpaceReclaimed)
+                containersIds: response.ContainersDeleted?.map { .init($0) } ?? [],
+                reclaimedSpace: response.SpaceReclaimed
+            )
         }
 
         public struct PrunedContainers {
@@ -186,30 +201,30 @@ extension DockerClient {
     }
 }
 
-extension Container {
+public extension Container {
     /// Starts a container.
     /// - Parameter client: A `DockerClient` instance that is used to perform the request.
     /// - Returns: Returns active `PortBinding`s when the container is started.
-    public func start(on client: DockerClient) async throws -> [PortBinding] {
+    func start(on client: DockerClient) async throws -> [PortBinding] {
         try await client.containers.start(container: self)
     }
 
     /// Stops a container.
     /// - Parameter client: A `DockerClient` instance that is used to perform the request.
-    public func stop(on client: DockerClient) async throws {
+    func stop(on client: DockerClient) async throws {
         try await client.containers.stop(container: self)
     }
 
     /// Removes a container.
     /// - Parameter client: A `DockerClient` instance that is used to perform the request.
-    public func remove(on client: DockerClient) async throws {
+    func remove(on client: DockerClient) async throws {
         try await client.containers.remove(container: self)
     }
 
     /// Gets the logs of a container as plain text.
     /// - Parameter client: A `DockerClient` instance that is used to perform the request.
     /// - Returns: Returns the logs as a plain text `String`.
-    public func logs(on client: DockerClient) async throws -> String {
+    func logs(on client: DockerClient) async throws -> String {
         try await client.containers.logs(container: self)
     }
 }

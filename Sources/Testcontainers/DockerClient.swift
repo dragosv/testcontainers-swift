@@ -1,5 +1,5 @@
-import Foundation
 import DockerClientSwift
+import Foundation
 import Logging
 
 // MARK: - Error Types
@@ -29,15 +29,17 @@ public class TestcontainersDockerClient: @unchecked Sendable {
         static let lock = NSLock()
         // Use a mutable class wrapper stored inside the lock-protected section
     }
-    // Thread-safe singleton storage using a lock and a class-based box
+
+    /// Thread-safe singleton storage using a lock and a class-based box
     private final class Box: @unchecked Sendable {
         var value: TestcontainersDockerClient?
     }
+
     private static let _shared = Box()
     private static let _lock = NSLock()
 
-    internal let client: DockerClientSwift.DockerClient
-    internal let logger: Logger
+    let client: DockerClientSwift.DockerClient
+    let logger: Logger
 
     /// Initialize a Docker client
     /// - Parameters:
@@ -68,8 +70,9 @@ public class TestcontainersDockerClient: @unchecked Sendable {
     // MARK: - Socket Detection
 
     private static func detectSocketPath() -> String {
-        if let dockerHost = ProcessInfo.processInfo.environment["DOCKER_HOST"],
-           let socket = socketPath(fromDockerHost: dockerHost)
+        if
+            let dockerHost = ProcessInfo.processInfo.environment["DOCKER_HOST"],
+            let socket = socketPath(fromDockerHost: dockerHost)
         {
             return socket
         }
@@ -111,8 +114,9 @@ public class TestcontainersDockerClient: @unchecked Sendable {
     /// - Throws: An error if container creation fails.
     public func createContainer(
         request: CreateContainerRequest,
-        name: String? = nil
-    ) async throws -> String {
+        name: String? = nil) async throws
+        -> String
+    {
         // Build port bindings for DockerClientSwift
         var portBindings: [DockerClientSwift.PortBinding] = []
 
@@ -194,8 +198,7 @@ public class TestcontainersDockerClient: @unchecked Sendable {
 
         // Build ContainerInspect from the DockerClientSwift response
         // We need to get the raw inspect response for detailed info
-        let rawInspect = try await getRawContainerInspect(id: id)
-        return rawInspect
+        return try await getRawContainerInspect(id: id)
     }
 
     /// List containers
@@ -228,8 +231,9 @@ public class TestcontainersDockerClient: @unchecked Sendable {
         containerId: String,
         stdout: Bool = true,
         stderr: Bool = true,
-        tail: Int? = nil
-    ) async throws -> String {
+        tail: Int? = nil) async throws
+        -> String
+    {
         let container = try await getDockerClientSwiftContainer(id: containerId)
         return try await client.containers.logs(container: container)
     }
@@ -246,8 +250,9 @@ public class TestcontainersDockerClient: @unchecked Sendable {
         containerId: String,
         cmd: [String],
         attachStdout: Bool = true,
-        attachStderr: Bool = true
-    ) async throws -> ExecInstance {
+        attachStderr: Bool = true) async throws
+        -> ExecInstance
+    {
         // DockerClientSwift doesn't have exec support directly, fall back to raw API
         let execResult = try await execViaRawAPI(containerId: containerId, cmd: cmd)
         return ExecInstance(id: execResult)
@@ -258,7 +263,7 @@ public class TestcontainersDockerClient: @unchecked Sendable {
     /// - Returns: The output of the exec command.
     /// - Throws: An error if starting the exec instance fails.
     public func execStart(execId: String) async throws -> String {
-        return try await execStartViaRawAPI(execId: execId)
+        try await execStartViaRawAPI(execId: execId)
     }
 
     // MARK: - Image Operations
@@ -290,7 +295,7 @@ public class TestcontainersDockerClient: @unchecked Sendable {
     /// - Throws: An error if network creation fails.
     public func createNetwork(name: String, driver: String = "bridge") async throws -> String {
         // DockerClientSwift doesn't have network support, fall back to raw API
-        return try await createNetworkViaRawAPI(name: name, driver: driver)
+        try await createNetworkViaRawAPI(name: name, driver: driver)
     }
 
     /// Connect a container to a network
@@ -351,15 +356,14 @@ public class TestcontainersDockerClient: @unchecked Sendable {
     // MARK: - Private Helpers
 
     private func getDockerClientSwiftContainer(id: String) async throws -> DockerClientSwift.Container {
-        return try await client.containers.get(containerByNameOrId: id)
+        try await client.containers.get(containerByNameOrId: id)
     }
 
     /// Raw API call for container inspect (needed for detailed port/network info)
     private func getRawContainerInspect(id: String) async throws -> ContainerInspect {
         // Use the underlying DockerClientSwift client to make a raw endpoint call
         let endpoint = RawInspectContainerEndpoint(nameOrId: id)
-        let response = try await client.run(endpoint)
-        return response
+        return try await client.run(endpoint)
     }
 
     /// Raw API call for exec create
@@ -372,8 +376,7 @@ public class TestcontainersDockerClient: @unchecked Sendable {
     /// Raw API call for exec start
     private func execStartViaRawAPI(execId: String) async throws -> String {
         let endpoint = RawExecStartEndpoint(execId: execId)
-        let response = try await client.run(endpoint)
-        return response
+        return try await client.run(endpoint)
     }
 
     /// Raw API call for network create
@@ -402,7 +405,7 @@ public class TestcontainersDockerClient: @unchecked Sendable {
     }
 }
 
-// Keep backward compatibility: typealias so existing code using `DockerClient` still works
+/// Keep backward compatibility: typealias so existing code using `DockerClient` still works
 public typealias DockerClient = TestcontainersDockerClient
 
 // MARK: - Container Reference
