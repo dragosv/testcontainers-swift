@@ -41,3 +41,4 @@ docs/
 *.tmp
 .cache/
 swift-nio
+test_output.txt
