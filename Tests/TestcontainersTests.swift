@@ -411,65 +411,70 @@ final class TestcontainersConfigurationTests: XCTestCase {
 }
 
 final class WaitStrategyConfigurationTests: XCTestCase {
-    func testHttpWaitStrategyConfiguration() {
-        let strategy = Wait.http(port: 8080, path: "/health", scheme: "https", timeout: 120) as! HttpWaitStrategy
+    func testHttpWaitStrategyConfiguration() throws {
+        let strategy = try XCTUnwrap(Wait.http(
+            port: 8080,
+            path: "/health",
+            scheme: "https",
+            timeout: 120
+        ) as? HttpWaitStrategy)
         XCTAssertEqual(strategy.port, 8080)
         XCTAssertEqual(strategy.path, "/health")
         XCTAssertEqual(strategy.scheme, "https")
         XCTAssertEqual(strategy.timeout, 120)
     }
 
-    func testHttpWaitStrategyDefaults() {
-        let strategy = Wait.http(port: 3000) as! HttpWaitStrategy
+    func testHttpWaitStrategyDefaults() throws {
+        let strategy = try XCTUnwrap(Wait.http(port: 3000) as? HttpWaitStrategy)
         XCTAssertEqual(strategy.port, 3000)
         XCTAssertEqual(strategy.path, "/")
         XCTAssertEqual(strategy.scheme, "http")
         XCTAssertEqual(strategy.timeout, 60)
     }
 
-    func testTcpWaitStrategyConfiguration() {
-        let strategy = Wait.tcp(port: 5432, timeout: 90) as! TcpWaitStrategy
+    func testTcpWaitStrategyConfiguration() throws {
+        let strategy = try XCTUnwrap(Wait.tcp(port: 5432, timeout: 90) as? TcpWaitStrategy)
         XCTAssertEqual(strategy.port, 5432)
         XCTAssertEqual(strategy.timeout, 90)
     }
 
-    func testTcpWaitStrategyDefaults() {
-        let strategy = Wait.tcp(port: 3306) as! TcpWaitStrategy
+    func testTcpWaitStrategyDefaults() throws {
+        let strategy = try XCTUnwrap(Wait.tcp(port: 3306) as? TcpWaitStrategy)
         XCTAssertEqual(strategy.port, 3306)
         XCTAssertEqual(strategy.timeout, 60)
     }
 
-    func testLogWaitStrategyConfiguration() {
-        let strategy = Wait.log(message: "Ready", timeout: 30) as! LogWaitStrategy
+    func testLogWaitStrategyConfiguration() throws {
+        let strategy = try XCTUnwrap(Wait.log(message: "Ready", timeout: 30) as? LogWaitStrategy)
         XCTAssertEqual(strategy.message, "Ready")
         XCTAssertEqual(strategy.timeout, 30)
     }
 
-    func testLogWaitStrategyDefaults() {
-        let strategy = Wait.log(message: "Started") as! LogWaitStrategy
+    func testLogWaitStrategyDefaults() throws {
+        let strategy = try XCTUnwrap(Wait.log(message: "Started") as? LogWaitStrategy)
         XCTAssertEqual(strategy.message, "Started")
         XCTAssertEqual(strategy.timeout, 60)
     }
 
-    func testExecWaitStrategyConfiguration() {
-        let strategy = Wait.exec(command: ["pg_isready"], timeout: 45) as! ExecWaitStrategy
+    func testExecWaitStrategyConfiguration() throws {
+        let strategy = try XCTUnwrap(Wait.exec(command: ["pg_isready"], timeout: 45) as? ExecWaitStrategy)
         XCTAssertEqual(strategy.command, ["pg_isready"])
         XCTAssertEqual(strategy.timeout, 45)
     }
 
-    func testExecWaitStrategyDefaults() {
-        let strategy = Wait.exec(command: ["echo", "hello"]) as! ExecWaitStrategy
+    func testExecWaitStrategyDefaults() throws {
+        let strategy = try XCTUnwrap(Wait.exec(command: ["echo", "hello"]) as? ExecWaitStrategy)
         XCTAssertEqual(strategy.command, ["echo", "hello"])
         XCTAssertEqual(strategy.timeout, 60)
     }
 
-    func testHealthCheckWaitStrategyConfiguration() {
-        let strategy = Wait.healthCheck(timeout: 180) as! HealthCheckWaitStrategy
+    func testHealthCheckWaitStrategyConfiguration() throws {
+        let strategy = try XCTUnwrap(Wait.healthCheck(timeout: 180) as? HealthCheckWaitStrategy)
         XCTAssertEqual(strategy.timeout, 180)
     }
 
-    func testHealthCheckWaitStrategyDefaults() {
-        let strategy = Wait.healthCheck() as! HealthCheckWaitStrategy
+    func testHealthCheckWaitStrategyDefaults() throws {
+        let strategy = try XCTUnwrap(Wait.healthCheck() as? HealthCheckWaitStrategy)
         XCTAssertEqual(strategy.timeout, 60)
     }
 
@@ -478,12 +483,12 @@ final class WaitStrategyConfigurationTests: XCTestCase {
         XCTAssert(strategy is NoWaitStrategy)
     }
 
-    func testCombinedWaitStrategyContainsAllStrategies() {
+    func testCombinedWaitStrategyContainsAllStrategies() throws {
         let tcp = Wait.tcp(port: 5432)
         let log = Wait.log(message: "Ready")
         let http = Wait.http(port: 8080)
 
-        let combined = Wait.all(tcp, log, http) as! CombinedWaitStrategy
+        let combined = try XCTUnwrap(Wait.all(tcp, log, http) as? CombinedWaitStrategy)
         XCTAssertEqual(combined.strategies.count, 3)
         XCTAssert(combined.strategies[0] is TcpWaitStrategy)
         XCTAssert(combined.strategies[1] is LogWaitStrategy)
