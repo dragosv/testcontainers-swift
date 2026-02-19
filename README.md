@@ -1,8 +1,8 @@
 [![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://github.com/codespaces/new?hide_repo_select=true&ref=develop&repo=1157716797&machine=standardLinux32gb&devcontainer_path=.devcontainer%2Fdevcontainer.json&location=EastUs)
 
 
-[![Build status](https://github.com/dragosv/testcontainers-swift/actions/workflows/main.yml/badge.svg)](https://github.com/dragosv/testcontainers-swift/actions/workflows/ci.yml)
-[![codecov](https://codecov.io/gh/dragosv/testcontainers-swift/branch/master/graph/badge.svg)](https://codecov.io/gh/dragosv/testcontainers-swift)
+[![CI/CD](https://github.com/dragosv/testcontainers-swift/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/dragosv/testcontainers-swift/actions/workflows/ci.yml)
+[![codecov](https://codecov.io/gh/dragosv/testcontainers-swift/branch/main/graph/badge.svg)](https://codecov.io/gh/dragosv/testcontainers-swift)
 [![Language](https://img.shields.io/badge/Swift-6.0-brightgreen.svg)](http://swift.org)
 [![Docker](https://img.shields.io/badge/Docker%20Engine%20API-%20%201.44-blue)](https://docs.docker.com/engine/api/v1.44/)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=shields)](http://makeapullrequest.com)
