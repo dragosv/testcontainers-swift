@@ -34,7 +34,7 @@ jobs:
         swift-version: ${{ matrix.swift }}
 
     - name: Cache Swift dependencies
-      uses: actions/cache@v4
+      uses: actions/cache@v5
       with:
         path: |
           .build
@@ -133,7 +133,7 @@ jobs:
         swift-version: '6.2'
 
     - name: Cache Swift dependencies
-      uses: actions/cache@v4
+      uses: actions/cache@v5
       with:
         path: .build
         key: ubuntu-latest-swift-6.2-${{ hashFiles('Package.resolved') }}
