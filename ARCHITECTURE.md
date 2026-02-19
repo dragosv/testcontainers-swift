@@ -1,356 +1,200 @@
-# Testcontainers Swift - Architecture
+# Testcontainers Swift — Architecture
 
-This document describes the architecture and design of Testcontainers for Swift.
+This document describes the internal design and architectural decisions of the library.
+For a feature inventory and implementation stats see [PROJECT_SUMMARY.md](PROJECT_SUMMARY.md).
+For usage examples and getting-started instructions see [QUICKSTART.md](QUICKSTART.md).
 
 ## Design Goals
 
-1. **Swift-First**: Idiomatic Swift using protocols, value types, and modern concurrency
-2. **Minimal Dependencies**: Use only Foundation for HTTP communication
-3. **Type Safety**: Leverage Swift's type system for correctness
-4. **Async/Await**: Built on Swift's async/await concurrency model
-5. **Developer Experience**: Fluent API for easy container configuration
-6. **Compatibility**: Support macOS, Linux, iOS, tvOS, and watchOS
+| Goal | Approach |
+|------|----------|
+| Swift-first | Protocols, value types, async/await, `Sendable` |
+| Type safety | Swift's type system enforces container configuration correctness |
+| Developer experience | Fluent builder API, DSL-style wait strategies |
+| Minimal coupling | Two clearly separated modules with a defined boundary |
+| Testability | All I/O hidden behind protocols; containers are easy to mock |
 
-## Architecture Overview
+## Module Boundary
+
+The library is split into two Swift Package targets with a strict dependency direction:
 
 ```
-┌─────────────────────────────────────────────┐
-│          User Application Code              │
-├─────────────────────────────────────────────┤
-│  Module Layer (PostgreSQL, MySQL, etc.)    │
-├─────────────────────────────────────────────┤
-│  Container Builder & Management Layer       │
-│  - ContainerBuilder: Fluent configuration   │
-│  - Container: Protocol for lifecycle        │
-│  - DockerContainerImpl: Docker implementation│
-├─────────────────────────────────────────────┤
-│  Docker Client & API Layer                 │
-│  - DockerClient: REST API communication    │
-│  - Models: Request/Response DTOs           │
-├─────────────────────────────────────────────┤
-│  Docker Engine (via Docker API)            │
-└─────────────────────────────────────────────┘
+Testcontainers  ──depends on──►  DockerClientSwift  ──speaks to──►  Docker Engine
+(high-level API)                  (low-level HTTP)                   (REST API)
 ```
 
-## Core Components
+**DockerClientSwift** is a self-contained Docker API client. It knows nothing about test containers, wait strategies, or modules. It translates Swift function calls into Docker Engine REST requests over a Unix socket or TCP.
 
-### 1. Models (Models.swift)
+**Testcontainers** owns all concepts meaningful to test authors: container lifecycle, wait strategies, pre-configured modules, and network management. It delegates all Docker I/O to `DockerClientSwift`.
 
-Data structures representing Docker entities:
+## Component Diagram
 
-- **DockerContainer**: List container representation
-- **ContainerInspect**: Detailed container information
-- **ContainerState**: Runtime state information
-- **PortBinding**: Port mapping configuration
-- **DockerNetwork**: Network resource representation
-- **CreateContainerRequest**: API request for container creation
-
-**Design Pattern**: Codable structures for JSON serialization with Docker API
-
-### 2. Docker Client (DockerClient.swift)
-
-Low-level Docker API communication layer using Foundation's URLSession.
-
-**Key Responsibilities**:
-- HTTP communication with Docker daemon
-- Endpoint auto-detection (Unix socket on macOS/Linux, TCP fallback)
-- Request/response serialization and deserialization
-- Container operations (create, start, stop, remove, inspect, exec, logs)
-- Image operations (pull, inspect)
-- Network operations (create, connect, disconnect)
-
-**Architecture Pattern**: Actor-based for thread safety with static shared instance
-
-**API Endpoints Used**:
-- `/v1.44/containers/create` - Create container
-- `/v1.44/containers/{id}/start` - Start container
-- `/v1.44/containers/{id}/stop` - Stop container
-- `/v1.44/containers/{id}/json` - Inspect container
-- `/v1.44/containers/{id}/exec` - Execute command
-- `/v1.44/containers/{id}/logs` - Get logs
-- `/v1.44/images/create` - Pull image
-- `/v1.44/networks/create` - Create network
-- `/v1.44/networks/{id}/connect` - Connect to network
-
-### 3. Wait Strategies (WaitStrategy.swift)
-
-Implements the Strategy pattern for defining container readiness conditions.
-
-**Core Protocol**:
-```swift
-public protocol WaitStrategy {
-    func waitUntilReady(container: Container, client: DockerClient) async throws
-}
+```
+┌─────────────────────────────────────────────────────────────────┐
+│  Testcontainers module                                          │
+│                                                                 │
+│  ┌─────────────┐   builds   ┌──────────────────────────────┐  │
+│  │  Modules    │──────────► │  ContainerBuilder             │  │
+│  │  (Postgres, │            │  (fluent config, port binding,│  │
+│  │   MySQL,    │            │   env vars, wait strategy)    │  │
+│  │   Redis,    │            └──────────────┬───────────────┘  │
+│  │   Mongo)    │                           │ builds            │
+│  └─────────────┘                           ▼                   │
+│                              ┌─────────────────────────┐       │
+│                              │  DockerContainerImpl     │       │
+│                              │  (implements Container   │       │
+│                              │   protocol)              │       │
+│                              └──────────┬──────────────┘       │
+│                                         │ uses                  │
+│  ┌──────────────────┐                   │                       │
+│  │  WaitStrategy    │◄──────────────────┤                       │
+│  │  (protocol +     │                   │                       │
+│  │   7 impls)       │                   │                       │
+│  └──────────────────┘                   │                       │
+│                                         │                       │
+│  ┌──────────────────┐                   │                       │
+│  │  Network         │◄──────────────────┘                       │
+│  │  (DockerNetwork  │                                           │
+│  │   + Builder)     │                                           │
+│  └──────────────────┘                                           │
+│                    │ delegates all Docker I/O                   │
+└────────────────────┼────────────────────────────────────────────┘
+                     ▼
+┌─────────────────────────────────────────────────────────────────┐
+│  DockerClientSwift module                                       │
+│                                                                 │
+│  DockerClient  ──►  Container API  ──►  Unix socket / TCP       │
+│               ──►  Image API                                    │
+│               ──►  Network API                                  │
+│               ──►  System API                                   │
+└─────────────────────────────────────────────────────────────────┘
 ```
 
-**Implementations**:
-- **NoWaitStrategy**: No waiting (immediate)
-- **HttpWaitStrategy**: Wait for HTTP endpoint to return 2xx
-- **TcpWaitStrategy**: Wait for TCP port to be available
-- **LogWaitStrategy**: Wait for specific log message
-- **ExecWaitStrategy**: Wait for command execution to succeed
-- **HealthCheckWaitStrategy**: Wait for Docker health checks
-- **CombinedWaitStrategy**: Execute multiple strategies sequentially
+## Key Design Patterns
 
-**Wait Builder API**: `Wait` class provides static methods for DSL-style configuration
+### 1. Protocol-Oriented Core
 
-```swift
-Wait.http(port: 8080)
-Wait.tcp(port: 3306)
-Wait.all(.tcp(port: 5432), .http(port: 8080))
-```
+Every major abstraction is a protocol, not a base class:
 
-### 4. Container Protocol & Implementation (Container.swift)
-
-Abstracts container lifecycle and operations.
-
-**Container Protocol**:
 ```swift
 public protocol Container: AnyObject {
     var id: String { get }
-    var name: String? { get }
-    var image: String { get }
-    var host: String? { get }
-    var ipAddress: String? { get }
-    
     func start() async throws
     func stop(timeout: Int) async throws
-    func delete() async throws
     func getMappedPort(_ containerPort: Int) throws -> Int
-    func exec(command: [String]) async throws -> String
-    func getLogs() async throws -> String
-    func getState() async throws -> ContainerStatus
+    // ...
+}
+
+public protocol WaitStrategy {
+    func waitUntilReady(container: any Container, client: DockerClient) async throws
 }
 ```
 
-**Implementation**: `DockerContainerImpl` wraps Docker API calls and manages lifecycle
+This makes individual components independently testable and replaceable without inheritance hierarchies.
 
-**Lifecycle Operations**:
-1. Create (via Docker API)
-2. Start (via Docker API)
-3. Wait for readiness (via wait strategies)
-4. Execute operations (exec, logs, etc.)
-5. Stop (via Docker API)
-6. Delete (via Docker API)
+### 2. Builder Pattern with Method Chaining
 
-### 5. Container Builder (Container.swift)
+`ContainerBuilder` accumulates configuration and executes it only when `build()` / `buildAsync()` is called. Each configuration method returns `Self`, enabling chaining:
 
-Fluent API for container configuration.
-
-**Pattern**: Builder pattern with method chaining returning `Self`
-
-**Configuration Method Categories**:
-- **Naming**: `withName()`
-- **Environment**: `withEnvironment()`
-- **Labels**: `withLabel()`
-- **Ports**: `withPortBinding()`
-- **Waiting**: `withWaitStrategy()`
-- **Networking**: `withNetwork()`, `withNetworkAliases()`
-- **Execution**: `withEntrypoint()`, `withCmd()`
-
-**Build Phases**:
-1. Configuration assembly (builder methods)
-2. Image pull (if needed)
-3. Container creation (Docker API)
-4. Container start (Docker API)
-5. Wait for readiness (configured strategy)
-
-### 6. Network Management (Network.swift)
-
-Docker network lifecycle and container connection management.
-
-**DockerNetworkImpl**: Represents a Docker network with operations:
-- `connectContainer()`: Add container to network
-- `disconnectContainer()`: Remove container from network
-- `delete()`: Remove network
-
-**NetworkBuilder**: Fluent API for network creation
 ```swift
-let network = try await NetworkBuilder("app-network")
-    .withDriver("bridge")
+ContainerBuilder("postgres:15")
+    .withPortBinding(5432, assignRandomHostPort: true)
+    .withEnvironment(["POSTGRES_DB": "test"])
+    .withWaitStrategy(Wait.tcp(port: 5432))
     .build()
 ```
 
-### 7. Modules (Modules.swift)
+Modules extend this by pre-populating the builder with sensible defaults and then exposing domain-specific methods (`withDatabase`, `withUsername`, etc.).
 
-Pre-configured containers for common services.
+### 3. Strategy Pattern for Readiness
 
-**Module Pattern**:
-1. **Container Class**: Configuration builder (e.g., `PostgresContainer`)
-2. **Reference Class**: Started container with convenience methods (e.g., `PostgresContainerReference`)
-3. **Defaults**: Environment variables, ports, wait strategies
-4. **Extensions**: Service-specific methods like `getConnectionString()`
+`WaitStrategy` implementations are composable and interchangeable. The `Wait` class acts as a DSL factory:
 
-**Provided Modules**:
-- **PostgreSQL**: Connection-ready Postgres database
-- **MySQL**: Connection-ready MySQL database
-- **Redis**: Connection-ready Redis instance
-- **MongoDB**: Connection-ready MongoDB instance
+| Strategy | Mechanism |
+|----------|-----------|
+| `NoWaitStrategy` | Returns immediately |
+| `HttpWaitStrategy` | Polls HTTP endpoint for 2xx |
+| `TcpWaitStrategy` | Opens TCP connection |
+| `LogWaitStrategy` | Scans container log stream |
+| `ExecWaitStrategy` | Runs a command inside the container |
+| `HealthCheckWaitStrategy` | Reads Docker health-check status |
+| `CombinedWaitStrategy` | Executes a list of strategies sequentially |
+
+Strategies are polled with configurable timeout and backoff — the `Container` is passed in so strategies can call `exec()` or `getLogs()` without coupling to a specific implementation.
+
+### 4. Reference Types for Lifecycle Management
+
+`DockerContainerImpl` and `DockerNetworkImpl` are classes, not structs. This is intentional:
+
+- A container is a live external resource — shared references to the same object are desirable.
+- Lifecycle methods mutate internal state (container ID, mapped ports).
+- `@unchecked Sendable` is used on the Docker client because the underlying HTTP session is thread-safe by design.
+
+### 5. Module Pattern
+
+Each pre-configured module consists of two types:
+
+```
+PostgresContainer          — builder, configures defaults, exposes withDatabase() etc.
+    └─ .start() ──────────► PostgresContainerReference  — running container + getConnectionString()
+```
+
+This keeps the configuration phase separate from the runtime phase and prevents calling `getConnectionString()` before the container has started.
 
 ## Concurrency Model
 
-**Technology**: Swift async/await (async functions with `await` keywords)
+All I/O operations are `async throws`. The library targets Swift Concurrency (async/await) exclusively — there are no callbacks or Combine publishers.
 
-**Benefits**:
-- Structured concurrency eliminating callback hell
-- Compiler-checked concurrency safety
-- Seamless integration with modern Swift APIs
+**Thread safety** is handled at two levels:
+- `DockerClientSwift` uses `AsyncHTTPClient` (backed by SwiftNIO) whose `EventLoop` manages I/O concurrency.
+- The `TestcontainersDockerClient` wrapper is `@unchecked Sendable` because the underlying HTTP client is safe to share across tasks.
 
-**Pattern**: All I/O operations are async
-```swift
-let container = try await builder.buildAsync()
-try await container.start()
-```
-
-## Error Handling
-
-**Error Type**: `TestcontainersError` enum with associated values
-
-**Error Cases**:
-- `.dockerNotAvailable` - Docker daemon not accessible
-- `.containerNotFound(id)` - Container doesn't exist
-- `.waitStrategyFailed(reason)` - Wait condition not met
-- `.portMappingFailed(port)` - Port mapping error
-- `.apiError(message)` - Docker API error
-- `.timeout` - Operation exceeded timeout
-- `.invalidConfiguration(reason)` - Invalid container config
-
-**Error Handling Pattern**: Swift error propagation
-```swift
-try await container.start() // Throws TestcontainersError
-```
-
-## Memory Management & Cleanup
-
-**Reference Semantics**: Container and network objects are classes (reference types)
-
-**Cleanup Mechanisms**:
-1. **Manual**: Call `stop()` and `delete()` explicitly
-2. **Scoped**: Use Swift's `defer` statement
-   ```swift
-   defer { try? await container.stop() }
-   ```
-3. **Resource Reaper**: Orphaned containers are cleaned up by Docker
-
-**Best Practice**:
-```swift
-let container = try await builder.buildAsync()
-try await container.start()
-defer { try? await container.stop() }
-// Use container...
-```
+Callers are responsible for ensuring that container references are not accessed from multiple tasks simultaneously unless those accesses are read-only.
 
 ## Docker Endpoint Detection
 
-**Auto-detection Strategy**:
-1. Try Unix socket at `/var/run/docker.sock` (macOS/Linux)
-2. Try user-local Docker socket (macOS)
-3. Fall back to TCP at `localhost:2375`
+The client attempts endpoints in this order:
 
-**Configuration**: Can be overridden via `Testcontainers.configure()`
+1. `/var/run/docker.sock` — standard Unix socket
+2. `~/.docker/run/docker.sock` — Docker Desktop on macOS
+3. `DOCKER_HOST` environment variable
+4. `tcp://localhost:2375` — TCP fallback
 
-## Port Mapping
+Once a reachable endpoint is found it is cached for the lifetime of the client.
 
-**Port Allocation**:
-- Automatic random port assignment via `assignRandomHostPort: true`
-- Prevents port conflicts in test environments
-- Mapped port retrieved at runtime via `getMappedPort()`
+## Error Model
 
-**Port Format**: Internally stored as `"port/protocol"` (e.g., "5432/tcp")
+`TestcontainersError` is a typed enum so callers can pattern-match specific failure modes:
 
-## Network Communication
-
-**Network Modes**:
-- **Host Network**: Direct host access (simple but not isolated)
-- **Bridge Network**: Custom networks for isolated container communication
-- **Container Networks**: Inter-container DNS via service names
-
-**Pattern**: Prefer bridge networks for test isolation
 ```swift
-.withNetwork(network)
-.withNetworkAliases(["database"])
-```
-
-## Extension Architecture
-
-**Adding New Modules**:
-1. Create new container class in `Modules.swift`
-2. Implement builder pattern for configuration
-3. Provide service-specific connection methods
-4. Add tests demonstrating usage
-5. Document with examples
-
-**Example Structure**:
-```swift
-public class NewServiceContainer {
-    private let builder: ContainerBuilder
-    
-    public init(version: String) {
-        self.builder = ContainerBuilder("image:\(version)")
-    }
-    
-    public func start() async throws -> NewServiceReference {
-        // Configuration and startup
-    }
+public enum TestcontainersError: Error {
+    case dockerNotAvailable
+    case containerNotFound(id: String)
+    case waitStrategyFailed(reason: String)
+    case portMappingFailed(port: Int)
+    case timeout
+    case apiError(message: String)
+    case invalidConfiguration(reason: String)
 }
 ```
 
-## Testing Strategy
+## Port Mapping
 
-**Test Organization**:
-- Unit tests for models and error handling
-- Integration tests with real Docker containers
-- Module-specific tests validating defaults and APIs
+When `assignRandomHostPort: true` is set the Docker Engine allocates a free host port. The mapping is captured after container start by calling the `/containers/{id}/json` inspect endpoint and stored in the container object. `getMappedPort(_:)` reads this local cache — it does not make a network call.
 
-**Test Patterns**:
-- Async test methods using `async throws`
-- Setup/teardown for container lifecycle
-- Defer for cleanup ensuring test isolation
+Internally ports are keyed as `"\(port)/tcp"` to match the Docker API format.
 
-## Performance Considerations
+## Network Isolation
 
-1. **Lazy Docker Client Initialization**: Single instance per endpoint
-2. **Connection Pooling**: URLSession reuses connections
-3. **Concurrent Container Operations**: Async/await enables parallel container starts
-4. **Timeout Configuration**: Customizable per wait strategy
+Bridge networks are the recommended approach for inter-container communication in tests:
 
-## Future Enhancements
-
-1. **Resource Reaper**: Automatic cleanup of orphaned containers
-2. **Container Reuse**: Persist and reuse containers across test runs
-3. **Compose Support**: Multi-container orchestration from docker-compose
-4. **Custom Wait Strategies**: User-provided timeout and retry logic
-5. **CI/CD Integration**: Special handling for GitHub Actions, GitLab CI
-6. **Docker Compose Integration**: Deploy multi-container environments
-7. **Volume Management**: Data persistence and volume mounting
-8. **Health Checks**: Built-in health check monitoring
-
-## File Structure
-
-```
-testcontainers-swift/
-├── Package.swift                 # Swift Package manifest
-├── README.md                     # User documentation
-├── ARCHITECTURE.md              # This file
-├── CONTRIBUTING.md              # Contribution guidelines
-├── LICENSE                      # MIT License
-├── Sources/
-│   ├── Models.swift            # Data structures
-│   ├── DockerClient.swift       # Docker API client
-│   ├── Container.swift          # Container protocol & builder
-│   ├── WaitStrategy.swift       # Wait strategies
-│   ├── Network.swift            # Network management
-│   └── Modules.swift            # Pre-configured containers
-├── Examples/
-│   └── main.swift               # Usage examples
-├── Tests/
-│   └── TestcontainersTests.swift # Test suite
-└── .gitignore                   # Git ignore rules
-```
+- Each container gets a DNS name equal to its network alias.
+- Containers on the same bridge network can reach each other by alias without exposing ports to the host.
+- `NetworkBuilder` creates an isolated bridge and `DockerNetworkImpl` manages its lifetime.
 
 ## References
 
-- [Docker API Documentation](https://docs.docker.com/engine/api/)
-- [Swift Evolution - Async/Await](https://github.com/apple/swift-evolution/blob/main/proposals/0296-async-await.md)
-- [Testcontainers Java](https://github.com/testcontainers/testcontainers-java)
-- [Testcontainers .NET](https://github.com/testcontainers/testcontainers-dotnet)
+- [Docker Engine API v1.44](https://docs.docker.com/engine/api/v1.44/)
+- [Swift Concurrency — async/await proposal](https://github.com/apple/swift-evolution/blob/main/proposals/0296-async-await.md)
+- [testcontainers-dotnet](https://github.com/testcontainers/testcontainers-dotnet) — reference architecture
+- [docker-client-swift](https://github.com/alexsteinerde/docker-client-swift) — origin of DockerClientSwift module
