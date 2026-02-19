@@ -2,7 +2,7 @@
 [![Build status](https://github.com/dragosv/testcontainers-swift/actions/workflows/main.yml/badge.svg)](https://github.com/dragosv/testcontainers-swift/actions/workflows/main.yml)
 [![codecov](https://codecov.io/gh/dragosv/testcontainers-swift/branch/master/graph/badge.svg)](https://codecov.io/gh/dragosv/testcontainers-swift)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=shields)](http://makeapullrequest.com)
-[![Join the chat at https://gitter.im/testcontainers-swift/Lobby](https://badges.gitter.im/testcontainers-swift/Lobby.svg)](https://gitter.im/testcontainers-swift/Lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Join the chat at https://gitter.im/testcontainers-swift/Lobby](https://badges.gitter.im/testcontainers-swift/Lobby.svg)](https://gitter.im/testcontainers-swift/Lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge) 
 [![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Fdragosv%2Ftestcontainers-swift.svg?type=shield)](https://app.fossa.io/projects/git%2Bgithub.com%2Fdragosv%2Ftestcontainers-swift?ref=badge_shield)
 [![Language](https://img.shields.io/badge/Swift-6.0-brightgreen.svg)](http://swift.org)
 [![Docker](https://img.shields.io/badge/Docker%20Engine%20API-%20%201.44-blue)](https://docs.docker.com/engine/api/v1.44/)
@@ -314,10 +314,27 @@ MIT License - See [LICENSE](LICENSE) file for details
 ## Support
 
 - [Slack](https://slack.testcontainers.org/)
-- [GitHub Issues](https://github.com/dragosv/testcontainers-swift/issues)
-- [Stack Overflow](https://stackoverflow.com/questions/tagged/testcontainers)
+
 
 ## Acknowledgments
 
 * **[Docker Client for Swift]**: This project includes significant code from [Docker Client](https://github.com/alexsteinerde/docker-client-swift), originally developed by [Alexander Steiner](https://github.com/alexsteinerde), now archived.
 * The logic for [Docker Client] is derived from their work, which is licensed under the [MIT] license.
+
+## Copyright
+
+Copyright (c) 2026 Dragos Varovici and other authors.
+
+## Support
+----
+
+Join our [Slack Workspace][slack-workspace] | [Testcontainers OSS][testcontainers-oss] | [Testcontainers Cloud][testcontainers-cloud] | [GitHub Issues](testcontainers-swift-github-issues) | [Stack Overflow] [testcontainers-stack-overflow]
+| [Stack Overflow](https://stackoverflow.com/questions/tagged/testcontainers)
+
+
+[slack-workspace]: https://slack.testcontainers.org/
+[testcontainers-oss]: https://www.testcontainers.org/
+[testcontainers-cloud]: https://www.testcontainers.cloud/
+[testcontainers-swift-github-issues]: https://github.com/dragosv/testcontainers-swift/issues/
+[testcontainers-stack-overflow]: https://stackoverflow.com/questions/tagged/testcontainers
+
