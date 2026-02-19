@@ -84,3 +84,13 @@ Workflow files live in `.github/workflows/`. Coverage uploads use Codecov. See `
 - Tests use XCTest with `async throws` methods.
 - Container tests require Docker — they are integration tests.
 - Always clean up containers in `tearDown` or with `defer`.
+
+## Additional Best Practices
+
+- Prefer `guard` over force unwrapping; avoid `try!` and `as!` in production paths.
+- Propagate errors; only drop errors inside `Task {}` when explicitly acceptable.
+- Keep async code cancellation-aware; avoid detached tasks unless isolation is required.
+- Use `@Sendable` closure s for concurrent work and mark shared reference types `@unchecked Sendable` only with rationale.
+- For parallel setup, use `withThrowingTaskGroup` instead of manual task management.
+- Keep Docker endpoint configuration centralized via `Testcontainers.configure { ... }`; do not hardcode endpoints in tests.
+- When stubbing in unit tests, inject protocol types (e.g., `DockerClient` protocol) rather than concrete implementations.
