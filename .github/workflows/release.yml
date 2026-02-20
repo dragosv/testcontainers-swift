@@ -82,7 +82,7 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: ./docs.zip
-        asset_name: docs-${{ github.ref_name }}.zip
+        asset_path: ./Docs.zip
+        asset_name: Docs-${{ github.ref_name }}.zip
         asset_content_type: application/zip
       if: success()

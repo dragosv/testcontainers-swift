@@ -72,7 +72,7 @@ excluded:
   - Packages/
   - DerivedData/
   - .git/
-  - docs/
+  - Docs/
   - vendor/
 
 # Included file types

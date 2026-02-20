@@ -163,7 +163,7 @@ class DatabaseTests: XCTestCase {
 
 ## File Descriptions
 
-### Sources/Models.swift (500+ LOC)
+### Sources/Testcontainers/Models.swift (500+ LOC)
 Data structures for Docker entities:
 - `DockerContainer` - Container list information
 - `ContainerInspect` - Detailed container state
@@ -172,37 +172,37 @@ Data structures for Docker entities:
 - `DockerNetwork` - Network representation
 - `TestcontainersError` - Error types
 
-### Sources/DockerClient.swift (450+ LOC)
+### Sources/Testcontainers/DockerClient.swift (450+ LOC)
 Docker Remote API client:
 - Container operations: create, start, stop, remove, inspect, exec, logs
 - Image operations: pull, inspect
 - Network operations: create, connect, disconnect
 - Automatic Docker endpoint detection
-- Actor-based thread safety
+- Thread-safe singleton client wrapper
 - URLSession-based HTTP communication
 
-### Sources/Container.swift (300+ LOC)
+### Sources/Testcontainers/Container.swift (300+ LOC)
 Container management and builder:
 - `Container` protocol - Lifecycle interface
 - `DockerContainerImpl` - Docker implementation
 - `ContainerBuilder` - Fluent configuration API
 - Methods: `withName()`, `withPortBinding()`, `withEnvironment()`, `withWaitStrategy()`, etc.
 
-### Sources/WaitStrategy.swift (400+ LOC)
+### Sources/Testcontainers/WaitStrategy.swift (400+ LOC)
 Readiness verification strategies:
 - `WaitStrategy` protocol
 - 6 implementations: HTTP, TCP, Log, Exec, HealthCheck, Combined
 - `Wait` DSL builder with static methods
 - Timeout and retry configuration
 
-### Sources/Network.swift (80+ LOC)
+### Sources/Testcontainers/Network.swift (80+ LOC)
 Network management:
 - `DockerNetworkImpl` - Network lifecycle
 - `NetworkBuilder` - Builder pattern
 - Bridge network creation
 - Container connection management
 
-### Sources/Modules.swift (550+ LOC)
+### Sources/Testcontainers/Modules.swift (550+ LOC)
 Pre-configured service modules:
 - `PostgresContainer` + `PostgresContainerReference`
 - `MySqlContainer` + `MySqlContainerReference`
@@ -278,7 +278,7 @@ public class NewServiceContainer {
     
     public func start() async throws -> NewServiceReference {
         let container = try await builder
-            .withWaitStrategy(.tcp(port: port))
+            .withWaitStrategy(Wait.tcp(port: port))
             .buildAsync()
         
         try await container.start()
@@ -356,7 +356,7 @@ swift package generate-documentation
 
 ## Requirements
 
-- **Swift**: 5.9 or later (for async/await)
+- **Swift**: 6.1 or later
 - **Docker**: Docker or Docker Desktop running
 - **macOS**: 13.0 or later (if on macOS)
 

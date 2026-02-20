@@ -1,6 +1,6 @@
 # Quick Start Guide
 
-Get started with Testcontainers Swift in 5 minutes.
+Get started with Testcontainers for Swift in 5 minutes.
 
 ## Installation
 
@@ -20,7 +20,7 @@ Or in Xcode:
 ## Prerequisites
 
 - Docker installed and running
-- Swift 6.0 or later
+- Swift 6.1 or later
 - macOS, Linux, iOS, tvOS, or watchOS
 
 ## Basic Example
@@ -49,7 +49,7 @@ try await postgres.stop()
 let container = try await ContainerBuilder("nginx:latest")
     .withName("my-web-server")
     .withPortBinding(80, assignRandomHostPort: true)
-    .withWaitStrategy(.tcp(port: 80, timeout: 30))
+    .withWaitStrategy(Wait.tcp(port: 80, timeout: 30))
     .buildAsync()
 
 try await container.start()
@@ -130,12 +130,12 @@ let url = try mongo.getConnectionString()
 
 ## Common Patterns
 
-### Using defer for cleanup  
+### Using defer for cleanup
 
 ```swift
 let container = try await builder.buildAsync()
 try await container.start()
-defer { try? await container.stop() }
+defer { Task { try? await container.stop() } }
 
 // Use container...
 ```
@@ -143,11 +143,11 @@ defer { try? await container.stop() }
 ### Custom wait strategies
 
 ```swift
-try await container
+let container = try await ContainerBuilder("postgres:15")
     .withWaitStrategy(
-        .all(
-            .tcp(port: 5432),
-            .log(message: "database system is ready")
+        Wait.all(
+            Wait.tcp(port: 5432),
+            Wait.log(message: "database system is ready")
         )
     )
     .buildAsync()
@@ -211,7 +211,7 @@ print(logs)
 
 **Solution**: Increase timeout or change strategy:
 ```swift
-.withWaitStrategy(.tcp(port: 5432, timeout: 120))
+.withWaitStrategy(Wait.tcp(port: 5432, timeout: 120))
 ```
 
 ## Next Steps

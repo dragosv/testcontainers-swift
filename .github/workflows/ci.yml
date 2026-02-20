@@ -185,7 +185,7 @@ jobs:
       uses: actions/upload-artifact@v6
       with:
         name: documentation
-        path: docs/
+        path: Docs/
       if: success()
 
   # Security and dependency checks

@@ -3,7 +3,7 @@
 
 [![CI/CD](https://github.com/dragosv/testcontainers-swift/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/dragosv/testcontainers-swift/actions/workflows/ci.yml)
 [![codecov](https://codecov.io/gh/dragosv/testcontainers-swift/branch/main/graph/badge.svg)](https://codecov.io/gh/dragosv/testcontainers-swift)
-[![Language](https://img.shields.io/badge/Swift-6.0-brightgreen.svg)](http://swift.org)
+[![Language](https://img.shields.io/badge/Swift-6.1-brightgreen.svg)](http://swift.org)
 [![Docker](https://img.shields.io/badge/Docker%20Engine%20API-%20%201.44-blue)](https://docs.docker.com/engine/api/v1.44/)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=shields)](http://makeapullrequest.com)
 
@@ -13,7 +13,7 @@ A lightweight Swift library for writing tests with throwaway Docker containers, 
 
 ## Requirements
 
-- Swift 6.0+, macOS 13.0+ (or Linux)
+- Swift 6.1+, macOS 13.0+ (or Linux)
 - Docker or Docker Desktop running
 
 ## Installation
@@ -31,15 +31,15 @@ See [QUICKSTART.md](QUICKSTART.md) for a step-by-step guide.
 ```swift
 import Testcontainers
 
-let container = ContainerBuilder("nginx:latest")
+let container = try await ContainerBuilder("nginx:latest")
     .withPortBinding(80, assignRandomHostPort: true)
     .withWaitStrategy(Wait.http(path: "/", port: 80))
-    .build()
+    .buildAsync()
 
 try await container.start()
 defer { Task { try? await container.stop() } }
 
-let port = container.getMappedPort(80)
+let port = try container.getMappedPort(80)
 ```
 
 ## Modules
@@ -55,7 +55,7 @@ Pre-configured containers for common services — each exposes a `getConnectionS
 
 ```swift
 let postgres = try await PostgresContainer().withDatabase("testdb").start()
-let connectionString = postgres.getConnectionString()
+let connectionString = try postgres.getConnectionString()
 ```
 
 ## Wait Strategies
@@ -83,7 +83,8 @@ final class DatabaseTests: XCTestCase {
     }
 
     func testConnection() async throws {
-        XCTAssertNotNil(postgres.getConnectionString())
+        let connectionString = try postgres.getConnectionString()
+        XCTAssertNotNil(connectionString)
     }
 }
 ```

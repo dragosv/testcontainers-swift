@@ -102,7 +102,7 @@ labels:
 
   - name: documentation
     color: '#ede889'
-    description: Docs, docs, docs.
+    description: Docs, Docs, Docs.
 
   - name: feature
     color: '#11c134'
