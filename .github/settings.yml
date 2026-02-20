@@ -90,7 +90,7 @@ labels:
 
   - name: low hanging fruit
     color: '#FFC300'
-    description: Issues that are swiftod for newcomers.
+    description: Issues that are good for newcomers.
 
   - name: podman
     color: '#B52710'
