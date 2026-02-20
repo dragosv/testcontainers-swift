@@ -72,7 +72,7 @@ labels:
     color: '#a2eeef'
     description: New feature or request
 
-  - name: swiftod first issue
+  - name: good first issue
     color: '#FEF2C0'
     description: Want to contribute to testcontainers? Start from here
 
