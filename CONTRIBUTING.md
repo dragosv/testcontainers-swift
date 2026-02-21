@@ -91,7 +91,7 @@ public protocol Container: AnyObject {
 
 To add a new container module:
 
-1. Create a new file in `Sources/Modules/`
+1. Add module types in `Sources/Testcontainers/Modules.swift`
 2. Implement the container class following the pattern of existing modules
 3. Provide pre-configured defaults for the service
 4. Add connection string methods for easy integration
@@ -114,7 +114,7 @@ public class MyServiceContainer {
     
     public func start() async throws -> MyServiceContainerReference {
         let container = try await builder
-            .withWaitStrategy(.tcp(port: port))
+            .withWaitStrategy(Wait.tcp(port: port))
             .buildAsync()
         
         try await container.start()

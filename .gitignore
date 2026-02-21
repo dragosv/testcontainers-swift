@@ -34,7 +34,6 @@ Package.resolved
 coverage.lcov
 dependencies.json
 dependencies.txt
-docs/
 *.profdata
 
 # Temporary files
