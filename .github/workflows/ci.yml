@@ -126,6 +126,8 @@ jobs:
     steps:
     - name: Checkout code
       uses: actions/checkout@v6
+      with:
+        fetch-depth: 0
 
     - name: Setup Swift
       uses: swift-actions/setup-swift@v2
@@ -157,6 +159,7 @@ jobs:
       uses: SonarSource/sonarqube-scan-action@v7.0.0
       env:
         SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
 
   # Documentation checks
   documentation:
