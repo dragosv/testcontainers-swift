@@ -41,7 +41,7 @@ autolabeler:
       - '/^(fix)(\(.+\))?!?\:/'
   - label: 'documentation'
     title:
-      - '/^Docs(\(.+\))?!?\:/'
+      - '/^docs(\(.+\))?!?\:/'
   - label: 'chore'
     title:
       - '/^chore(\(.+\))?!?\:/'
