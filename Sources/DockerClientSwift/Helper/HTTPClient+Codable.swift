@@ -58,14 +58,20 @@ public extension EventLoopFuture where Value == HTTPClient.Response {
         flatMapThrowing { response -> T in
             try response.checkStatusCode()
             if T.self == NoBody.self || T.self == NoBody?.self {
-                return NoBody() as! T
+                guard let result = NoBody() as? T else {
+                    throw BodyError.noBodyData
+                }
+                return result
             }
 
             guard let bodyData = response.bodyData else {
                 throw BodyError.noBodyData
             }
             if T.self == String.self {
-                return String(data: bodyData, encoding: .utf8) as! T
+                guard let result = String(data: bodyData, encoding: .utf8) as? T else {
+                    throw BodyError.noBodyData
+                }
+                return result
             }
             return try decoder.decode(type, from: bodyData)
         }
@@ -151,13 +157,19 @@ extension HTTPClient.Response {
     func decode<T: Decodable>(as type: T.Type, decoder: Decoder = JSONDecoder()) throws -> T {
         try checkStatusCode()
         if T.self == NoBody.self || T.self == NoBody?.self {
-            return NoBody() as! T
+            guard let result = NoBody() as? T else {
+                throw EventLoopFuture<HTTPClient.Response>.BodyError.noBodyData
+            }
+            return result
         }
         guard let bodyData else {
             throw EventLoopFuture<HTTPClient.Response>.BodyError.noBodyData
         }
         if T.self == String.self {
-            return String(data: bodyData, encoding: .utf8) as! T
+            guard let result = String(data: bodyData, encoding: .utf8) as? T else {
+                throw EventLoopFuture<HTTPClient.Response>.BodyError.noBodyData
+            }
+            return result
         }
         return try decoder.decode(type, from: bodyData)
     }
@@ -175,7 +187,7 @@ extension HTTPClient.Response {
     }
 }
 
-public protocol Decoder {
+public protocol Decoder: Sendable {
     func decode<T: Decodable>(_ type: T.Type, from: Data) throws -> T
 }
 

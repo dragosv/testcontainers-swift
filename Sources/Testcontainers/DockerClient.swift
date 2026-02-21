@@ -58,7 +58,12 @@ public class TestcontainersDockerClient: @unchecked Sendable {
         if _shared.value == nil {
             _shared.value = TestcontainersDockerClient()
         }
-        return _shared.value!
+        // Safe: we just assigned a value above if it was nil.
+        guard let instance = _shared.value else {
+            // Should never happen; assignment always succeeds.
+            return TestcontainersDockerClient()
+        }
+        return instance
     }
 
     /// Shutdown the Docker client
@@ -191,14 +196,9 @@ public class TestcontainersDockerClient: @unchecked Sendable {
     /// - Returns: Detailed container inspection information.
     /// - Throws: An error if inspecting the container fails.
     public func inspectContainer(id: String) async throws -> ContainerInspect {
-        let container = try await client.containers.get(containerByNameOrId: id)
-
-        // We need the raw inspect data, so we do a direct call
-        let response = try await client.containers.get(containerByNameOrId: id)
-
-        // Build ContainerInspect from the DockerClientSwift response
-        // We need to get the raw inspect response for detailed info
-        return try await getRawContainerInspect(id: id)
+        // Use the raw inspect endpoint to get full port/network details not
+        // exposed by the high-level DockerClientSwift container type.
+        try await getRawContainerInspect(id: id)
     }
 
     /// List containers

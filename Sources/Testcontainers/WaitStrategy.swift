@@ -392,11 +392,11 @@ public class Wait {
 
 /// A wait strategy that allows custom logic via a closure.
 public struct CustomWaitStrategy: WaitStrategy {
-    private let closure: (Container, DockerClient) async throws -> Void
+    private let closure: @Sendable (Container, DockerClient) async throws -> Void
 
     /// Initializes a new custom wait strategy.
     /// - Parameter closure: The closure to execute for waiting.
-    public init(closure: @escaping (Container, DockerClient) async throws -> Void) {
+    public init(closure: @escaping @Sendable (Container, DockerClient) async throws -> Void) {
         self.closure = closure
     }
 
