@@ -134,7 +134,11 @@ final class PostgresModuleTests: XCTestCase {
             .withPassword("mypass")
             .start()
 
-        defer { Task { @MainActor in try? await postgres.stop() } }
+        defer {
+            // Cleanup: errors intentionally suppressed — container stop failure should not
+            // mask the test result. Use tearDown for strict cleanup requirements.
+            Task { @MainActor in try? await postgres.stop() }
+        }
 
         let connectionString = try postgres.getConnectionString()
         XCTAssert(connectionString.contains("postgresql://"))
@@ -151,7 +155,11 @@ final class MySqlModuleTests: XCTestCase {
             .withPassword("rootpass")
             .start()
 
-        defer { Task { @MainActor in try? await mysql.stop() } }
+        defer {
+            // Cleanup: errors intentionally suppressed — container stop failure should not
+            // mask the test result. Use tearDown for strict cleanup requirements.
+            Task { @MainActor in try? await mysql.stop() }
+        }
 
         let connectionString = try mysql.getConnectionString()
         XCTAssert(connectionString.contains("mysql://"))
@@ -164,7 +172,11 @@ final class RedisModuleTests: XCTestCase {
         let redis = try await RedisContainer(version: "7")
             .start()
 
-        defer { Task { @MainActor in try? await redis.stop() } }
+        defer {
+            // Cleanup: errors intentionally suppressed — container stop failure should not
+            // mask the test result. Use tearDown for strict cleanup requirements.
+            Task { @MainActor in try? await redis.stop() }
+        }
 
         let redisURL = try redis.getRedisURL()
         XCTAssert(redisURL.contains("redis://"))
@@ -178,7 +190,11 @@ final class MongoDbModuleTests: XCTestCase {
             .withPassword("password")
             .start()
 
-        defer { Task { @MainActor in try? await mongo.stop() } }
+        defer {
+            // Cleanup: errors intentionally suppressed — container stop failure should not
+            // mask the test result. Use tearDown for strict cleanup requirements.
+            Task { @MainActor in try? await mongo.stop() }
+        }
 
         let connectionString = try mongo.getConnectionString()
         XCTAssert(connectionString.contains("mongodb://"))
