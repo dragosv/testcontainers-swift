@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+echo "Running swiftformat --lint ..."
+
+if command -v swiftformat lint . >/dev/null 2>&1; then
+    swiftformat --lint .
+elif [ -x "/opt/homebrew/bin/swiftformat lint ." ]; then
+    /opt/homebrew/bin/swiftformat --lint .
+else
+    echo "error: swiftformat not found on PATH."
+    echo "Install SwiftFormat and retry commit."
+    exit 1
+fi
