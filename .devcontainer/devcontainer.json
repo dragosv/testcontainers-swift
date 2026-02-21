@@ -24,6 +24,16 @@
         "ghcr.io/devcontainers/features/docker-in-docker:2.14.0": {
             "version": "latest",
             "moby": true
+        },
+        "ghcr.io/meaningful-ooo/devcontainer-features/homebrew:2": {
+            "installHomebrew": "true",
+            "homebrewUser": "vscode",
+            "homebrewPrefix": "/home/vscode/.linuxbrew",
+            "homebrewInstallFromLinuxbrewRepo": "true",
+            "homebrewInstallFromGitHub": "false",
+            "homebrewUpgradeBeforeInstall": "true",
+            "homebrewCleanupAfterInstall": "true"
         }
-    }
+    },
+    "postCreateCommand": "brew install swiftformat && ./scripts/install-githooks.sh"
 }
