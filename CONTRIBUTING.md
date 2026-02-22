@@ -1,4 +1,4 @@
-# Contributing to Testcontainers Swift
+# Contributing to Testcontainers Zig
 
 First off, thank you for considering contributing to Testcontainers Swift! It's people like you that make Testcontainers such a great tool.
 
