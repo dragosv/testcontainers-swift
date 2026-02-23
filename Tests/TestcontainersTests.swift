@@ -202,6 +202,133 @@ final class MongoDbModuleTests: XCTestCase {
     }
 }
 
+// MARK: - New Module Tests
+
+final class MsSqlModuleTests: XCTestCase {
+    func testMsSqlContainer() async throws {
+        let mssql = try await MsSqlContainer()
+            .withDatabase("testdb")
+            .withPassword("yourStrong(!)Password")
+            .start()
+
+        defer {
+            // Cleanup: errors intentionally suppressed — container stop failure should not
+            // mask the test result. Use tearDown for strict cleanup requirements.
+            Task { @MainActor in try? await mssql.stop() }
+        }
+
+        let connectionString = try mssql.getConnectionString()
+        XCTAssert(connectionString.contains("Server="))
+        XCTAssert(connectionString.contains("testdb"))
+        XCTAssert(connectionString.contains("User Id=sa"))
+    }
+}
+
+final class RabbitMqModuleTests: XCTestCase {
+    func testRabbitMqContainer() async throws {
+        let rabbitmq = try await RabbitMqContainer(version: "3.11")
+            .withUsername("guest")
+            .withPassword("guest")
+            .start()
+
+        defer {
+            // Cleanup: errors intentionally suppressed — container stop failure should not
+            // mask the test result. Use tearDown for strict cleanup requirements.
+            Task { @MainActor in try? await rabbitmq.stop() }
+        }
+
+        let connectionString = try rabbitmq.getConnectionString()
+        XCTAssert(connectionString.contains("amqp://"))
+        XCTAssert(connectionString.contains("guest:guest"))
+    }
+}
+
+final class KafkaModuleTests: XCTestCase {
+    func testKafkaContainer() async throws {
+        let kafka = try await KafkaContainer()
+            .start()
+
+        defer {
+            // Cleanup: errors intentionally suppressed — container stop failure should not
+            // mask the test result. Use tearDown for strict cleanup requirements.
+            Task { @MainActor in try? await kafka.stop() }
+        }
+
+        let bootstrapServers = kafka.getBootstrapServers()
+        XCTAssertFalse(bootstrapServers.isEmpty)
+        XCTAssert(bootstrapServers.contains(":"))
+
+        let connectionString = kafka.getConnectionString()
+        XCTAssertEqual(connectionString, bootstrapServers)
+    }
+}
+
+final class ElasticsearchModuleTests: XCTestCase {
+    func testElasticsearchContainer() async throws {
+        let elasticsearch = try await ElasticsearchContainer(version: "8.6.1")
+            .withPassword("elastic")
+            .start()
+
+        defer {
+            // Cleanup: errors intentionally suppressed — container stop failure should not
+            // mask the test result. Use tearDown for strict cleanup requirements.
+            Task { @MainActor in try? await elasticsearch.stop() }
+        }
+
+        let connectionString = try elasticsearch.getConnectionString()
+        XCTAssert(connectionString.contains("http://"))
+        XCTAssert(connectionString.contains("elastic:elastic"))
+    }
+}
+
+final class AzuriteModuleTests: XCTestCase {
+    func testAzuriteContainer() async throws {
+        let azurite = try await AzuriteContainer()
+            .start()
+
+        defer {
+            // Cleanup: errors intentionally suppressed — container stop failure should not
+            // mask the test result. Use tearDown for strict cleanup requirements.
+            Task { @MainActor in try? await azurite.stop() }
+        }
+
+        let connectionString = try azurite.getConnectionString()
+        XCTAssert(connectionString.contains("DefaultEndpointsProtocol=http"))
+        XCTAssert(connectionString.contains("devstoreaccount1"))
+        XCTAssert(connectionString.contains("BlobEndpoint="))
+        XCTAssert(connectionString.contains("QueueEndpoint="))
+        XCTAssert(connectionString.contains("TableEndpoint="))
+
+        let blobEndpoint = try azurite.getBlobEndpoint()
+        XCTAssert(blobEndpoint.contains("http://"))
+
+        let queueEndpoint = try azurite.getQueueEndpoint()
+        XCTAssert(queueEndpoint.contains("http://"))
+
+        let tableEndpoint = try azurite.getTableEndpoint()
+        XCTAssert(tableEndpoint.contains("http://"))
+    }
+}
+
+final class LocalStackModuleTests: XCTestCase {
+    func testLocalStackContainer() async throws {
+        let localstack = try await LocalStackContainer()
+            .start()
+
+        defer {
+            // Cleanup: errors intentionally suppressed — container stop failure should not
+            // mask the test result. Use tearDown for strict cleanup requirements.
+            Task { @MainActor in try? await localstack.stop() }
+        }
+
+        let endpoint = try localstack.getEndpoint()
+        XCTAssert(endpoint.contains("http://"))
+
+        let connectionString = try localstack.getConnectionString()
+        XCTAssertEqual(connectionString, endpoint)
+    }
+}
+
 // MARK: - Unit Tests (No Docker Required)
 
 final class ContainerStatusTests: XCTestCase {
