@@ -126,10 +126,108 @@ func exampleMultipleContainersWithNetwork() async throws {
     print("PostgreSQL stopped\n")
 }
 
-// MARK: - Example 7: Wait Strategies
+// MARK: - Example 7: Microsoft SQL Server
+
+func exampleMsSql() async throws {
+    print("=== Example 7: Microsoft SQL Server Container ===")
+
+    let mssql = try await MsSqlContainer()
+        .withDatabase("testdb")
+        .withPassword("yourStrong(!)Password")
+        .start()
+
+    defer { try? Task { try await mssql.stop() }.value }
+
+    let connectionString = try mssql.getConnectionString()
+    print("MS SQL Server is running at: \(connectionString)")
+    print()
+}
+
+// MARK: - Example 8: RabbitMQ
+
+func exampleRabbitMq() async throws {
+    print("=== Example 8: RabbitMQ Container ===")
+
+    let rabbitmq = try await RabbitMqContainer(version: "3.11")
+        .withUsername("guest")
+        .withPassword("guest")
+        .start()
+
+    defer { try? Task { try await rabbitmq.stop() }.value }
+
+    let connectionString = try rabbitmq.getConnectionString()
+    print("RabbitMQ is running at: \(connectionString)")
+    print()
+}
+
+// MARK: - Example 9: Kafka
+
+func exampleKafka() async throws {
+    print("=== Example 9: Kafka Container ===")
+
+    let kafka = try await KafkaContainer()
+        .start()
+
+    defer { try? Task { try await kafka.stop() }.value }
+
+    let bootstrapServers = kafka.getBootstrapServers()
+    print("Kafka bootstrap servers: \(bootstrapServers)")
+    print()
+}
+
+// MARK: - Example 10: Elasticsearch
+
+func exampleElasticsearch() async throws {
+    print("=== Example 10: Elasticsearch Container ===")
+
+    let elasticsearch = try await ElasticsearchContainer(version: "8.6.1")
+        .withPassword("elastic")
+        .start()
+
+    defer { try? Task { try await elasticsearch.stop() }.value }
+
+    let connectionString = try elasticsearch.getConnectionString()
+    print("Elasticsearch is running at: \(connectionString)")
+    print()
+}
+
+// MARK: - Example 11: Azurite (Azure Storage Emulator)
+
+func exampleAzurite() async throws {
+    print("=== Example 11: Azurite Container ===")
+
+    let azurite = try await AzuriteContainer()
+        .start()
+
+    defer { try? Task { try await azurite.stop() }.value }
+
+    let connectionString = try azurite.getConnectionString()
+    print("Azurite connection string: \(connectionString)")
+
+    let blobEndpoint = try azurite.getBlobEndpoint()
+    print("Blob endpoint: \(blobEndpoint)")
+    print()
+}
+
+// MARK: - Example 12: LocalStack (AWS Emulator)
+
+func exampleLocalStack() async throws {
+    print("=== Example 12: LocalStack Container ===")
+
+    let localstack = try await LocalStackContainer()
+        .start()
+
+    defer { try? Task { try await localstack.stop() }.value }
+
+    let endpoint = try localstack.getEndpoint()
+    print("LocalStack endpoint: \(endpoint)")
+    print()
+}
+
+// MARK: - Example 13: Wait Strategies
 
 func exampleWaitStrategies() async throws {
-    print("=== Example 7: Wait Strategies ===")
+    print("=== Example 13: Wait Strategies ===")
 
     // HTTP wait strategy
     let webContainer = try await ContainerBuilder("httpbin/httpbin:latest")
@@ -159,10 +257,10 @@ func exampleWaitStrategies() async throws {
     print()
 }
 
-// MARK: - Example 8: Container Logs
+// MARK: - Example 14: Container Logs
 
 func exampleContainerLogs() async throws {
-    print("=== Example 8: Container Logs ===")
+    print("=== Example 14: Container Logs ===")
 
     let container = try await ContainerBuilder("alpine:latest")
         .withCmd(["sh", "-c", "echo 'Hello from container' && sleep 10"])
@@ -196,6 +294,12 @@ struct ExamplesApp {
             // try await exampleRedis()
             // try await exampleMongoDB()
             // try await exampleMultipleContainersWithNetwork()
+            // try await exampleMsSql()
+            // try await exampleRabbitMq()
+            // try await exampleKafka()
+            // try await exampleElasticsearch()
+            // try await exampleAzurite()
+            // try await exampleLocalStack()
             // try await exampleWaitStrategies()
             // try await exampleContainerLogs()
 

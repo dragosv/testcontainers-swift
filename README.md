@@ -52,6 +52,12 @@ Pre-configured containers for common services — each exposes a `getConnectionS
 | `MySqlContainer` | `mysql` |
 | `RedisContainer` | `redis` |
 | `MongoDbContainer` | `mongo` |
+| `MsSqlContainer` | `mcr.microsoft.com/mssql/server` |
+| `RabbitMqContainer` | `rabbitmq` |
+| `KafkaContainer` | `confluentinc/cp-kafka` |
+| `ElasticsearchContainer` | `elasticsearch` |
+| `AzuriteContainer` | `mcr.microsoft.com/azure-storage/azurite` |
+| `LocalStackContainer` | `localstack/localstack` |
 
 ```swift
 let postgres = try await PostgresContainer().withDatabase("testdb").start()
