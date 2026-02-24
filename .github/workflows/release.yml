@@ -31,6 +31,10 @@ jobs:
         swift package --allow-writing-to-directory docs generate-documentation --target Testcontainers --output-path docs
       continue-on-error: true
 
+    - name: Create documentation archive
+      run: zip -r docs.zip docs/
+      continue-on-error: true
+
     - name: Create release archive
       run: |
         mkdir release
