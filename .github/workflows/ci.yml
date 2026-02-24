@@ -11,9 +11,62 @@ env:
   DEVELOPER_DIR: /Applications/Xcode.app/Contents/Developer
 
 jobs:
+  docker-host:
+    name: Docker Host (Tunnel)
+    runs-on: ubuntu-latest
+    if: github.event_name != 'schedule' # Only run on explicit triggers
+    steps:
+      - name: Setup SSH and bore tunnel
+        run: |
+          sudo systemctl start docker || true
+          sudo chmod 666 /var/run/docker.sock
+          
+          # Setup SSH
+          sudo apt-get update && sudo apt-get install -y openssh-server
+          sudo mkdir -p /run/sshd
+          sudo ssh-keygen -A
+          sudo sed -i 's/^#*AllowStreamLocalForwarding.*/AllowStreamLocalForwarding yes/' /etc/ssh/sshd_config
+          sudo sed -i 's/^#*AllowTcpForwarding.*/AllowTcpForwarding yes/' /etc/ssh/sshd_config
+          sudo systemctl restart ssh || sudo /usr/sbin/sshd
+          
+          # Setup Keys
+          ssh-keygen -t ed25519 -f ./id_ed25519 -N ""
+          mkdir -p ~/.ssh
+          cat ./id_ed25519.pub >> ~/.ssh/authorized_keys
+          chmod 700 ~/.ssh
+          chmod 600 ~/.ssh/authorized_keys
+          
+          # Start Tunnel
+          curl -Ls https://github.com/ekzhang/bore/releases/download/v0.5.1/bore-v0.5.1-x86_64-unknown-linux-musl.tar.gz | tar zx
+          ./bore local 22 --to bore.pub > bore.log 2>&1 &
+          
+          sleep 5
+          PORT=$(grep -oP 'listening at bore.pub:\K\d+' bore.log | head -1)
+          if [ -z "$PORT" ]; then cat bore.log; exit 1; fi
+          echo "$PORT" > docker-port.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: docker-port
+          path: |
+            docker-port.txt
+            id_ed25519
+      - name: Keep alive
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          for i in {1..180}; do
+            STATUS=$(gh api repos/${{ github.repository }}/actions/runs/${{ github.run_id }}/jobs | jq -r '.jobs[] | select(.name == "Build and Test (macos-latest, 6.1)") | .status')
+            if [ "$STATUS" = "completed" ]; then
+              echo "macOS tests completed. Shutting down tunnel."
+              break
+            fi
+            sleep 10
+          done
+
   # Build and test across multiple platforms and Swift versions
   build-and-test:
     name: Build and Test
+
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -21,13 +74,73 @@ jobs:
         include:
           - os: ubuntu-latest
             swift: '6.2'
+          - os: ubuntu-latest
+            swift: '6.1'
+          - os: macos-latest
+            swift: '6.1'
 
     steps:
     - name: Checkout code
-      uses: actions/checkout@v6
+      uses: actions/checkout@v4
       with:
         fetch-depth: 0
 
+    - name: Install system dependencies (Linux)
+      if: runner.os == 'Linux'
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y libsqlite3-dev llvm curl
+
+    - name: Setup Docker (macOS)
+      if: runner.os == 'macOS'
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        for i in {1..20}; do
+          gh run download ${{ github.run_id }} --repo ${{ github.repository }} -n docker-port --dir . && break || sleep 5
+        done
+        PORT=$(cat docker-port.txt)
+        chmod 600 id_ed25519
+        
+        brew install docker
+        
+        export DOCKER_HOST="unix:///tmp/docker.sock"
+        echo "DOCKER_HOST=$DOCKER_HOST" >> $GITHUB_ENV
+        
+        echo "Starting SSH tunnel to bore.pub:$PORT..."
+        ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null \
+            -i ./id_ed25519 -N -L /tmp/docker.sock:/var/run/docker.sock \
+            runner@bore.pub -p $PORT &
+            
+        # Wait for socket to appear
+        for i in {1..30}; do
+          if [ -S /tmp/docker.sock ]; then
+            echo "Socket is locally available."
+            break
+          fi
+          sleep 1
+        done
+
+        # Wait for readiness
+        for i in {1..30}; do
+          if docker system info > /dev/null 2>&1; then
+            echo "docker is ready."
+            break
+          fi
+          echo "Waiting for docker... (attempt $i)"
+          sleep 2
+        done
+
+        echo "Pre-pulling Docker images to prevent bore tunnel timeout during tests..."
+        docker pull postgres:15 || true
+        docker pull rabbitmq:3.11 || true
+        docker pull redis:7 || true
+        docker pull mongo:7 || true
+        docker pull confluentinc/cp-kafka:7.4.0 || true
+        docker pull mysql:8 || true
+        docker pull nginx:latest || true
+
+   
     - name: Setup Swift
       uses: swift-actions/setup-swift@v2
       with:
@@ -43,12 +156,6 @@ jobs:
         restore-keys: |
           ${{ matrix.os }}-swift-${{ matrix.swift }}-
 
-    - name: Install system dependencies (Linux)
-      if: runner.os == 'Linux'
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y libsqlite3-dev llvm curl
-
     - name: Build
       run: swift build --configuration release --verbose
 
@@ -56,7 +163,7 @@ jobs:
       run: swift test --configuration release --verbose --enable-code-coverage
 
     - name: Upload test results
-      uses: actions/upload-artifact@v6
+      uses: actions/upload-artifact@v4
       if: failure()
       with:
         name: test-results-${{ matrix.os }}-swift-${{ matrix.swift }}
@@ -66,36 +173,59 @@ jobs:
 
     - name: Generate coverage report
       run: |
+        # Use xcrun on macOS, plain llvm-cov on Linux
+        if [ "${{ runner.os }}" = "macOS" ]; then
+          LLVM_COV="xcrun llvm-cov"
+        else
+          LLVM_COV="llvm-cov"
+        fi
+
         # Find the profdata file
         PROFDATA=$(find .build -name "default.profdata" -type f | head -1)
         echo "Found profdata: $PROFDATA"
 
-        # Find the test binary
-        BINARY=$(find .build -name "*.xctest" -type f -executable | head -1)
-        if [ -z "$BINARY" ]; then
-          BINARY=$(find .build -type f -name "*PackageTests" -executable | head -1)
+        # Find the test binary (macOS bundles vs Linux plain binary)
+        if [ "${{ runner.os }}" = "macOS" ]; then
+          XCTEST_BUNDLE=$(find .build -name "*.xctest" -type d | head -1)
+          if [ -n "$XCTEST_BUNDLE" ]; then
+            TEST_NAME=$(basename "$XCTEST_BUNDLE" .xctest)
+            BINARY="$XCTEST_BUNDLE/Contents/MacOS/$TEST_NAME"
+          fi
+          # Fallback: if no bundle was found or the derived binary is not executable,
+          # search for alternative binary locations similar to the Linux branch.
+          if [ -z "$BINARY" ] || [ ! -x "$BINARY" ]; then
+            BINARY=$(find .build -name "*.xctest" -type f -perm /111 | head -1)
+            if [ -z "$BINARY" ]; then
+              BINARY=$(find .build -type f -name "*PackageTests" -perm /111 | head -1)
+            fi
+          fi
+        else
+          BINARY=$(find .build -name "*.xctest" -type f -executable | head -1)
+          if [ -z "$BINARY" ]; then
+            BINARY=$(find .build -type f -name "*PackageTests" -executable | head -1)
+          fi
         fi
         echo "Found binary: $BINARY"
 
         # Generate LCOV report
-        if [ -n "$PROFDATA" ] && [ -n "$BINARY" ] && [ -f "$PROFDATA" ]; then
-          llvm-cov export \
+        if [ -n "$PROFDATA" ] && [ -n "$BINARY" ] && [ -f "$PROFDATA" ] && [ -f "$BINARY" ]; then
+          $LLVM_COV export \
             -format="lcov" \
             -instr-profile="$PROFDATA" \
             "$BINARY" \
             -ignore-filename-regex=".build|Tests" \
             > coverage.lcov
 
-          echo "✅ Coverage report generated"
+          echo "Coverage report generated"
 
           # Print summary
           echo "--- Coverage Summary ---"
-          llvm-cov report \
+          $LLVM_COV report \
             -instr-profile="$PROFDATA" \
             "$BINARY" \
             -ignore-filename-regex=".build|Tests" || true
         else
-          echo "⚠️ Could not find coverage files"
+          echo "Could not find coverage files"
           echo "Available files:"
           find .build -name "*.profdata" -o -name "*.xctest" 2>/dev/null | head -20
           touch coverage.lcov
@@ -112,12 +242,12 @@ jobs:
         verbose: true
 
     - name: Upload coverage artifact
-      uses: actions/upload-artifact@v6
+      uses: actions/upload-artifact@v4
       with:
         path: coverage.lcov
         retention-days: 30
         if-no-files-found: warn
-        name: coverage-report
+        name: coverage-report-${{ matrix.os }}-${{ matrix.swift }}
 
   # Code quality checks
   code-quality:
@@ -125,18 +255,18 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Checkout code
-      uses: actions/checkout@v6
+      uses: actions/checkout@v4
 
     - name: Setup Swift
       uses: swift-actions/setup-swift@v2
       with:
-        swift-version: '6.2'
+        swift-version: '6.1'
 
     - name: Cache Swift dependencies
       uses: actions/cache@v5
       with:
         path: .build
-        key: ubuntu-latest-swift-6.2-${{ hashFiles('Package.resolved') }}
+        key: ubuntu-latest-swift-6.1-${{ hashFiles('Package.resolved') }}
 
     - name: Set up Homebrew
       id: set-up-homebrew
@@ -159,12 +289,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Checkout code
-      uses: actions/checkout@v6
+      uses: actions/checkout@v4
 
     - name: Setup Swift
       uses: swift-actions/setup-swift@v2
       with:
-        swift-version: '6.2'
+        swift-version: '6.1'
 
     - name: Check documentation files
       run: |
@@ -182,7 +312,7 @@ jobs:
       continue-on-error: true
 
     - name: Upload documentation
-      uses: actions/upload-artifact@v6
+      uses: actions/upload-artifact@v4
       with:
         name: documentation
         path: docs/
@@ -194,14 +324,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Checkout code
-      uses: actions/checkout@v6
+      uses: actions/checkout@v4
       with:
         fetch-depth: 0
 
     - name: Setup Swift
       uses: swift-actions/setup-swift@v2
       with:
-        swift-version: '6.2'
+        swift-version: '6.1'
 
     - name: Run Swift Package Security Check
       run: |
@@ -234,7 +364,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Checkout code
-      uses: actions/checkout@v6
+      uses: actions/checkout@v4
 
     - name: Check license headers
       run: |
@@ -256,7 +386,7 @@ jobs:
     if: github.ref == 'refs/heads/main'
     steps:
     - name: Checkout code
-      uses: actions/checkout@v6
+      uses: actions/checkout@v4
 
     - name: Check version consistency
       run: |
@@ -286,7 +416,6 @@ jobs:
               "${{ needs.code-quality.result }}" == "success" && \
               "${{ needs.documentation.result }}" != "failure" && \
               "${{ needs.security.result }}" != "failure" && \
-              "${{ needs.coverage.result }}" != "failure" && \
               "${{ needs.license-check.result }}" != "failure" ]]; then
           echo "All critical checks passed!"
           exit 0
