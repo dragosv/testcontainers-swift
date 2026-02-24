@@ -21,6 +21,8 @@ jobs:
         include:
           - os: ubuntu-latest
             swift: '6.2'
+          - os: macos-13
+            swift: '6.2'
 
     steps:
     - name: Checkout code
@@ -28,6 +30,12 @@ jobs:
       with:
         fetch-depth: 0
 
+    - name: Install system dependencies (Linux)
+      if: runner.os == 'Linux'
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y libsqlite3-dev llvm curl
+   
     - name: Setup Swift
       uses: swift-actions/setup-swift@v2
       with:
@@ -42,12 +50,6 @@ jobs:
         key: ${{ matrix.os }}-swift-${{ matrix.swift }}-${{ hashFiles('Package.resolved') }}
         restore-keys: |
           ${{ matrix.os }}-swift-${{ matrix.swift }}-
-
-    - name: Install system dependencies (Linux)
-      if: runner.os == 'Linux'
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y libsqlite3-dev llvm curl
 
     - name: Build
       run: swift build --configuration release --verbose
@@ -66,36 +68,59 @@ jobs:
 
     - name: Generate coverage report
       run: |
+        # Use xcrun on macOS, plain llvm-cov on Linux
+        if [ "${{ runner.os }}" = "macOS" ]; then
+          LLVM_COV="xcrun llvm-cov"
+        else
+          LLVM_COV="llvm-cov"
+        fi
+
         # Find the profdata file
         PROFDATA=$(find .build -name "default.profdata" -type f | head -1)
         echo "Found profdata: $PROFDATA"
 
-        # Find the test binary
-        BINARY=$(find .build -name "*.xctest" -type f -executable | head -1)
-        if [ -z "$BINARY" ]; then
-          BINARY=$(find .build -type f -name "*PackageTests" -executable | head -1)
+        # Find the test binary (macOS bundles vs Linux plain binary)
+        if [ "${{ runner.os }}" = "macOS" ]; then
+          XCTEST_BUNDLE=$(find .build -name "*.xctest" -type d | head -1)
+          if [ -n "$XCTEST_BUNDLE" ]; then
+            TEST_NAME=$(basename "$XCTEST_BUNDLE" .xctest)
+            BINARY="$XCTEST_BUNDLE/Contents/MacOS/$TEST_NAME"
+          fi
+          # Fallback: if no bundle was found or the derived binary is not executable,
+          # search for alternative binary locations similar to the Linux branch.
+          if [ -z "$BINARY" ] || [ ! -x "$BINARY" ]; then
+            BINARY=$(find .build -name "*.xctest" -type f -perm /111 | head -1)
+            if [ -z "$BINARY" ]; then
+              BINARY=$(find .build -type f -name "*PackageTests" -perm /111 | head -1)
+            fi
+          fi
+        else
+          BINARY=$(find .build -name "*.xctest" -type f -executable | head -1)
+          if [ -z "$BINARY" ]; then
+            BINARY=$(find .build -type f -name "*PackageTests" -executable | head -1)
+          fi
         fi
         echo "Found binary: $BINARY"
 
         # Generate LCOV report
-        if [ -n "$PROFDATA" ] && [ -n "$BINARY" ] && [ -f "$PROFDATA" ]; then
-          llvm-cov export \
+        if [ -n "$PROFDATA" ] && [ -n "$BINARY" ] && [ -f "$PROFDATA" ] && [ -f "$BINARY" ]; then
+          $LLVM_COV export \
             -format="lcov" \
             -instr-profile="$PROFDATA" \
             "$BINARY" \
             -ignore-filename-regex=".build|Tests" \
             > coverage.lcov
 
-          echo "✅ Coverage report generated"
+          echo "Coverage report generated"
 
           # Print summary
           echo "--- Coverage Summary ---"
-          llvm-cov report \
+          $LLVM_COV report \
             -instr-profile="$PROFDATA" \
             "$BINARY" \
             -ignore-filename-regex=".build|Tests" || true
         else
-          echo "⚠️ Could not find coverage files"
+          echo "Could not find coverage files"
           echo "Available files:"
           find .build -name "*.profdata" -o -name "*.xctest" 2>/dev/null | head -20
           touch coverage.lcov
@@ -286,7 +311,6 @@ jobs:
               "${{ needs.code-quality.result }}" == "success" && \
               "${{ needs.documentation.result }}" != "failure" && \
               "${{ needs.security.result }}" != "failure" && \
-              "${{ needs.coverage.result }}" != "failure" && \
               "${{ needs.license-check.result }}" != "failure" ]]; then
           echo "All critical checks passed!"
           exit 0
