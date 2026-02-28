@@ -21,8 +21,6 @@ jobs:
         include:
           - os: ubuntu-latest
             swift: '6.2'
-          - os: macos-13
-            swift: '6.2'
 
     steps:
     - name: Checkout code
