@@ -73,6 +73,8 @@ jobs:
       matrix:
         include:
           - os: ubuntu-latest
+            swift: '6.2'
+          - os: ubuntu-latest
             swift: '6.1'
           - os: macos-latest
             swift: '6.1'
