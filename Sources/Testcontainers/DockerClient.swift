@@ -75,6 +75,18 @@ public class TestcontainersDockerClient: @unchecked Sendable {
     // MARK: - Socket Detection
 
     private static func detectSocketPath() -> String {
+        // 1. DOCKER_SOCK — raw socket path (no URI scheme prefix required).
+        //    Takes priority so callers can override the path without constructing
+        //    a full "unix://" URI (e.g. exported by CI after colima start).
+        if
+            let dockerSock = ProcessInfo.processInfo.environment["DOCKER_SOCK"],
+            !dockerSock.isEmpty
+        {
+            return dockerSock
+        }
+
+        // 2. DOCKER_HOST — standard Docker URI.  Only unix:// is supported here;
+        //    TCP endpoints are not handled by the unix-socket transport layer.
         if
             let dockerHost = ProcessInfo.processInfo.environment["DOCKER_HOST"],
             let socket = socketPath(fromDockerHost: dockerHost)
@@ -87,9 +99,18 @@ public class TestcontainersDockerClient: @unchecked Sendable {
             return "/var/run/docker.sock"
         }
 
+        // Docker Desktop on macOS
         let homeSocketPath = "\(NSHomeDirectory())/.docker/run/docker.sock"
         if FileManager.default.fileExists(atPath: homeSocketPath) {
             return homeSocketPath
+        }
+
+        // Colima default profile socket path (macOS)
+        // Colima does not symlink to /var/run/docker.sock unless explicitly
+        // configured, so we probe the well-known default-profile location.
+        let colimaSocketPath = "\(NSHomeDirectory())/.colima/default/docker.sock"
+        if FileManager.default.fileExists(atPath: colimaSocketPath) {
+            return colimaSocketPath
         }
         #elseif os(Linux)
         if FileManager.default.fileExists(atPath: "/var/run/docker.sock") {
