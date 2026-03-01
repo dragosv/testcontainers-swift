@@ -28,7 +28,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           for i in {1..20}; do
-            gh run download ${{ github.run_id }} -n docker-port --dir . && break || sleep 5
+            gh run download ${{ github.run_id }} --repo ${{ github.repository }} -n docker-port --dir . && break || sleep 5
           done
           PORT=$(cat docker-port.txt)
           curl -Ls https://github.com/ekzhang/bore/releases/download/v0.5.1/bore-v0.5.1-aarch64-apple-darwin.tar.gz | tar zx
