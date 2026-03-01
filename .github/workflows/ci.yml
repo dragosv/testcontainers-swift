@@ -39,7 +39,7 @@ jobs:
     - name: Setup Docker (macOS)
       if: runner.os == 'macOS'
       run: |
-        brew install colima docker
+        brew install colima docker qemu
 
         # Start Colima with QEMU as macOS-latest uses M1 which doesn't support nested virtualization
         colima start --runtime docker --cpu 3 --memory 6 --arch aarch64 --vm-type=qemu
