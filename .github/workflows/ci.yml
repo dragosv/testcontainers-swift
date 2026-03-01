@@ -16,20 +16,40 @@ jobs:
     runs-on: ubuntu-latest
     if: github.event_name != 'schedule' # Only run on explicit triggers
     steps:
-      - name: Expose Docker via bore
+      - name: Setup SSH and bore tunnel
         run: |
           sudo systemctl start docker || true
           sudo chmod 666 /var/run/docker.sock
+          
+          # Setup SSH
+          sudo apt-get update && sudo apt-get install -y openssh-server
+          sudo mkdir -p /run/sshd
+          sudo ssh-keygen -A
+          sudo sed -i 's/^#*AllowStreamLocalForwarding.*/AllowStreamLocalForwarding yes/' /etc/ssh/sshd_config
+          sudo sed -i 's/^#*AllowTcpForwarding.*/AllowTcpForwarding yes/' /etc/ssh/sshd_config
+          sudo systemctl restart ssh || sudo /usr/sbin/sshd
+          
+          # Setup Keys
+          ssh-keygen -t ed25519 -f ./id_ed25519 -N ""
+          mkdir -p ~/.ssh
+          cat ./id_ed25519.pub >> ~/.ssh/authorized_keys
+          chmod 700 ~/.ssh
+          chmod 600 ~/.ssh/authorized_keys
+          
+          # Start Tunnel
           curl -Ls https://github.com/ekzhang/bore/releases/download/v0.5.1/bore-v0.5.1-x86_64-unknown-linux-musl.tar.gz | tar zx
-          socat TCP-LISTEN:2375,fork,reuseaddr UNIX-CLIENT:/var/run/docker.sock &
-          ./bore local 2375 --to bore.pub > bore.log 2>&1 &
+          ./bore local 22 --to bore.pub > bore.log 2>&1 &
+          
           sleep 5
           PORT=$(grep -oP 'listening at bore.pub:\K\d+' bore.log | head -1)
+          if [ -z "$PORT" ]; then cat bore.log; exit 1; fi
           echo "$PORT" > docker-port.txt
       - uses: actions/upload-artifact@v4
         with:
           name: docker-port
-          path: docker-port.txt
+          path: |
+            docker-port.txt
+            id_ed25519
       - name: Keep alive
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -78,11 +98,26 @@ jobs:
           gh run download ${{ github.run_id }} --repo ${{ github.repository }} -n docker-port --dir . && break || sleep 5
         done
         PORT=$(cat docker-port.txt)
-        curl -Ls https://github.com/ekzhang/bore/releases/download/v0.5.1/bore-v0.5.1-aarch64-apple-darwin.tar.gz | tar zx
-        brew install socat docker
-        socat UNIX-LISTEN:/tmp/docker.sock,fork TCP:bore.pub:$PORT &
+        chmod 600 id_ed25519
+        
+        brew install docker
+        
         export DOCKER_HOST="unix:///tmp/docker.sock"
         echo "DOCKER_HOST=$DOCKER_HOST" >> $GITHUB_ENV
+        
+        echo "Starting SSH tunnel to bore.pub:$PORT..."
+        ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null \
+            -i ./id_ed25519 -N -L /tmp/docker.sock:/var/run/docker.sock \
+            runner@bore.pub -p $PORT &
+            
+        # Wait for socket to appear
+        for i in {1..30}; do
+          if [ -S /tmp/docker.sock ]; then
+            echo "Socket is locally available."
+            break
+          fi
+          sleep 1
+        done
 
         # Wait for readiness
         for i in {1..30}; do
