@@ -35,7 +35,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           for i in {1..180}; do
-            STATUS=$(gh api repos/${{ github.repository }}/actions/runs/${{ github.run_id }}/jobs | jq -r '.jobs[] | select(.name == "Build and Test (macos-latest, 6.2)") | .status')
+            STATUS=$(gh api repos/${{ github.repository }}/actions/runs/${{ github.run_id }}/jobs | jq -r '.jobs[] | select(.name == "Build and Test (macos-latest, 6.0)") | .status')
             if [ "$STATUS" = "completed" ]; then
               echo "macOS tests completed. Shutting down tunnel."
               break
@@ -53,9 +53,9 @@ jobs:
       matrix:
         include:
           - os: ubuntu-latest
-            swift: '6.2'
+            swift: '6.0'
           - os: macos-latest
-            swift: '6.2'
+            swift: '6.0'
 
     steps:
     - name: Checkout code
@@ -213,13 +213,13 @@ jobs:
     - name: Setup Swift
       uses: swift-actions/setup-swift@v2
       with:
-        swift-version: '6.2'
+        swift-version: '6.0'
 
     - name: Cache Swift dependencies
       uses: actions/cache@v5
       with:
         path: .build
-        key: ubuntu-latest-swift-6.2-${{ hashFiles('Package.resolved') }}
+        key: ubuntu-latest-swift-6.0-${{ hashFiles('Package.resolved') }}
 
     - name: Set up Homebrew
       id: set-up-homebrew
@@ -247,7 +247,7 @@ jobs:
     - name: Setup Swift
       uses: swift-actions/setup-swift@v2
       with:
-        swift-version: '6.2'
+        swift-version: '6.0'
 
     - name: Check documentation files
       run: |
@@ -284,7 +284,7 @@ jobs:
     - name: Setup Swift
       uses: swift-actions/setup-swift@v2
       with:
-        swift-version: '6.2'
+        swift-version: '6.0'
 
     - name: Run Swift Package Security Check
       run: |
