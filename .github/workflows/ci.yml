@@ -80,8 +80,8 @@ jobs:
         PORT=$(cat docker-port.txt)
         curl -Ls https://github.com/ekzhang/bore/releases/download/v0.5.1/bore-v0.5.1-aarch64-apple-darwin.tar.gz | tar zx
         brew install socat docker
-        sudo socat UNIX-LISTEN:/var/run/docker.sock,fork TCP:bore.pub:$PORT &
-        export DOCKER_HOST="unix:///var/run/docker.sock"
+        socat UNIX-LISTEN:/tmp/docker.sock,fork TCP:bore.pub:$PORT &
+        export DOCKER_HOST="unix:///tmp/docker.sock"
         echo "DOCKER_HOST=$DOCKER_HOST" >> $GITHUB_ENV
 
         # Wait for readiness
