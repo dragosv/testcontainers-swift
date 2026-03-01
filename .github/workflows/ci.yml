@@ -42,7 +42,7 @@ jobs:
         brew install colima docker qemu
 
         # Start Colima with QEMU as macOS-latest uses M1 which doesn't support nested virtualization
-        colima start --runtime docker --cpu 3 --memory 6 --arch aarch64 --vm-type=qemu
+        colima start --runtime docker --cpu 2 --memory 3 --arch aarch64 --vm-type=qemu
 
         # Wait for readiness
         for i in {1..30}; do
