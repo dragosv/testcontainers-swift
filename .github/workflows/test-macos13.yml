@@ -1,0 +1,12 @@
+name: Test MacOS 13 Colima
+on: [workflow_dispatch]
+jobs:
+  test:
+    runs-on: macos-13
+    steps:
+      - name: Install Colima
+        run: brew install colima docker
+      - name: Start Colima
+        run: colima start
+      - name: Check Docker
+        run: docker info
