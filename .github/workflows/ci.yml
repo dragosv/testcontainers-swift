@@ -44,6 +44,50 @@ jobs:
           PORT=$(grep -oP 'listening at bore.pub:\K\d+' bore.log | head -1)
           if [ -z "$PORT" ]; then cat bore.log; exit 1; fi
           echo "$PORT" > docker-port.txt
+
+      - name: Cache Docker images
+        uses: actions/cache@v4
+        id: cache-docker
+        with:
+          path: ~/docker-images
+          key: ${{ runner.os }}-docker-images-${{ hashFiles('.github/workflows/ci.yml') }}
+          restore-keys: |
+            ${{ runner.os }}-docker-images-
+
+      - name: Load cached Docker images
+        if: steps.cache-docker.outputs.cache-hit == 'true'
+        run: |
+          if [ -d ~/docker-images ]; then
+            for img in ~/docker-images/*.tar; do
+              if [ -f "$img" ]; then
+                sudo docker load -i "$img" || true
+              fi
+            done
+          fi
+
+      - name: Pre-pull and save Docker images
+        if: steps.cache-docker.outputs.cache-hit != 'true'
+        run: |
+          IMAGES=(
+            "postgres:15"
+            "rabbitmq:3.11"
+            "redis:7"
+            "mongo:7"
+            "confluentinc/cp-kafka:7.4.0"
+            "mysql:8"
+            "nginx:latest"
+          )
+          
+          mkdir -p ~/docker-images
+          
+          for img in "${IMAGES[@]}"; do
+            sudo docker pull "$img" || true
+            safe_name=$(echo "$img" | tr '/:' '_')
+            sudo docker save "$img" -o ~/docker-images/${safe_name}.tar || true
+          done
+          
+          sudo chown -R $USER:$USER ~/docker-images
+
       - uses: actions/upload-artifact@v4
         with:
           name: docker-port
@@ -131,16 +175,6 @@ jobs:
           sleep 2
         done
 
-        echo "Pre-pulling Docker images to prevent bore tunnel timeout during tests..."
-        docker pull postgres:15 || true
-        docker pull rabbitmq:3.11 || true
-        docker pull redis:7 || true
-        docker pull mongo:7 || true
-        docker pull confluentinc/cp-kafka:7.4.0 || true
-        docker pull mysql:8 || true
-        docker pull nginx:latest || true
-
-   
     - name: Setup Swift
       uses: swift-actions/setup-swift@v2
       with:
