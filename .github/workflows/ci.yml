@@ -46,7 +46,7 @@ jobs:
   # Build and test across multiple platforms and Swift versions
   build-and-test:
     name: Build and Test
-    needs: docker-host
+
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
