@@ -1,0 +1,12 @@
+name: Test Qemu
+on: [workflow_dispatch]
+jobs:
+  test:
+    runs-on: macos-latest
+    steps:
+      - name: Install
+        run: brew install colima docker
+      - name: Start Colima
+        run: colima start --runtime docker --cpu 2 --memory 3 --arch aarch64 --vm-type=qemu --verbose
+      - name: Check
+        run: docker info
