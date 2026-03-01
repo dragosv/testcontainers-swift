@@ -153,6 +153,11 @@ jobs:
     - name: Run SwiftLint
       run: swiftlint lint --strict --config .swiftlint.yml || true
 
+    - name: SonarQube Scan
+      uses: SonarSource/sonarqube-scan-action@v7.0.0
+      env:
+        SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+
   # Documentation checks
   documentation:
     name: Documentation
