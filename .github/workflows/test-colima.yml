@@ -1,0 +1,10 @@
+name: test-colima
+on: push
+jobs:
+  test:
+    runs-on: macos-13
+    steps:
+      - run: |
+          brew install colima docker
+          colima start
+          docker info
