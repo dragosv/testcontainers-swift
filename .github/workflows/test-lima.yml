@@ -1,0 +1,11 @@
+name: Test Lima
+on: [workflow_dispatch]
+jobs:
+  test:
+    runs-on: macos-latest
+    steps:
+      - name: Install Lima
+        run: |
+          brew install lima docker
+          lima start --name default
+          docker info
