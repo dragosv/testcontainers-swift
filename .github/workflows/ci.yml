@@ -93,6 +93,16 @@ jobs:
           echo "Waiting for docker... (attempt $i)"
           sleep 2
         done
+
+        echo "Pre-pulling Docker images to prevent bore tunnel timeout during tests..."
+        docker pull postgres:15 || true
+        docker pull rabbitmq:3.11 || true
+        docker pull redis:7 || true
+        docker pull mongo:7 || true
+        docker pull confluentinc/cp-kafka:7.4.0 || true
+        docker pull mysql:8 || true
+        docker pull nginx:latest || true
+
    
     - name: Setup Swift
       uses: swift-actions/setup-swift@v2
