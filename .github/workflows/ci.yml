@@ -81,7 +81,7 @@ jobs:
 
     steps:
     - name: Checkout code
-      uses: actions/checkout@v6
+      uses: actions/checkout@v4
       with:
         fetch-depth: 0
 
@@ -163,7 +163,7 @@ jobs:
       run: swift test --configuration release --verbose --enable-code-coverage
 
     - name: Upload test results
-      uses: actions/upload-artifact@v6
+      uses: actions/upload-artifact@v4
       if: failure()
       with:
         name: test-results-${{ matrix.os }}-swift-${{ matrix.swift }}
@@ -242,12 +242,12 @@ jobs:
         verbose: true
 
     - name: Upload coverage artifact
-      uses: actions/upload-artifact@v6
+      uses: actions/upload-artifact@v4
       with:
         path: coverage.lcov
         retention-days: 30
         if-no-files-found: warn
-        name: coverage-report
+        name: coverage-report-${{ matrix.os }}-${{ matrix.swift }}
 
   # Code quality checks
   code-quality:
@@ -255,7 +255,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Checkout code
-      uses: actions/checkout@v6
+      uses: actions/checkout@v4
 
     - name: Setup Swift
       uses: swift-actions/setup-swift@v2
@@ -289,7 +289,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Checkout code
-      uses: actions/checkout@v6
+      uses: actions/checkout@v4
 
     - name: Setup Swift
       uses: swift-actions/setup-swift@v2
@@ -312,7 +312,7 @@ jobs:
       continue-on-error: true
 
     - name: Upload documentation
-      uses: actions/upload-artifact@v6
+      uses: actions/upload-artifact@v4
       with:
         name: documentation
         path: docs/
@@ -324,7 +324,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Checkout code
-      uses: actions/checkout@v6
+      uses: actions/checkout@v4
       with:
         fetch-depth: 0
 
@@ -364,7 +364,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Checkout code
-      uses: actions/checkout@v6
+      uses: actions/checkout@v4
 
     - name: Check license headers
       run: |
@@ -386,7 +386,7 @@ jobs:
     if: github.ref == 'refs/heads/main'
     steps:
     - name: Checkout code
-      uses: actions/checkout@v6
+      uses: actions/checkout@v4
 
     - name: Check version consistency
       run: |
