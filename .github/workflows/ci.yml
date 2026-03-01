@@ -21,6 +21,8 @@ jobs:
         include:
           - os: ubuntu-latest
             swift: '6.2'
+          - os: macos-latest
+            swift: '6.2'
 
     steps:
     - name: Checkout code
@@ -33,6 +35,28 @@ jobs:
       run: |
         sudo apt-get update
         sudo apt-get install -y libsqlite3-dev llvm curl
+
+    - name: Setup Docker (macOS)
+      if: runner.os == 'macOS'
+      run: |
+        brew install colima docker
+
+        # Start Colima with QEMU as macOS-latest uses M1 which doesn't support nested virtualization
+        colima start --runtime docker --cpu 3 --memory 6 --arch aarch64 --vm-type=qemu
+
+        # Wait for readiness
+        for i in {1..30}; do
+          if docker system info > /dev/null 2>&1; then
+            echo "docker is ready."
+            break
+          fi
+          echo "Waiting for docker... (attempt $i)"
+          sleep 2
+        done
+        
+        RAW_SOCK="$HOME/.colima/default/docker.sock"
+        echo "DOCKER_SOCK=$RAW_SOCK" >> $GITHUB_ENV
+        echo "DOCKER_HOST=unix://$RAW_SOCK" >> $GITHUB_ENV
    
     - name: Setup Swift
       uses: swift-actions/setup-swift@v2
