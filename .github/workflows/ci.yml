@@ -99,7 +99,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           for i in {1..180}; do
-            STATUS=$(gh api repos/${{ github.repository }}/actions/runs/${{ github.run_id }}/jobs | jq -r '.jobs[] | select(.name == "Build and Test (macos-latest, 6.1)") | .status')
+            # Match any macOS job
+            STATUS=$(gh api repos/${{ github.repository }}/actions/runs/${{ github.run_id }}/jobs | jq -r '[.jobs[] | select(.name | test("macos")) | .status] | if all(. == "completed") then "completed" else "running" end')
             if [ "$STATUS" = "completed" ]; then
               echo "macOS tests completed. Shutting down tunnel."
               break
