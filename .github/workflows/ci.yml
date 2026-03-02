@@ -11,6 +11,7 @@ env:
   DEVELOPER_DIR: /Applications/Xcode.app/Contents/Developer
 
 jobs:
+  # docker-host is designed to stay alive while macOS jobs run, providing a tunnel to the Docker daemon on the Linux runner. It also pre-pulls and caches common images to speed up tests.
   docker-host:
     name: Docker Host (Tunnel)
     runs-on: ubuntu-latest
@@ -102,7 +103,7 @@ jobs:
         run: |
           for i in {1..180}; do
             # Match any macOS job
-            STATUS=$(gh api repos/${{ github.repository }}/actions/runs/${{ github.run_id }}/jobs | jq -r '[.jobs[] | select(.name | test("macos")) | .status] | if all(. == "completed") then "completed" else "running" end')
+            STATUS=$(gh api repos/${{ github.repository }}/actions/runs/${{ github.run_id }}/jobs | jq -r '[.jobs[] | select(.name | test("macos")) | .status] | if length == 0 then "running" elif all(. == "completed") then "completed" else "running" end')
             if [ "$STATUS" = "completed" ]; then
               echo "macOS tests completed. Shutting down tunnel."
               break
