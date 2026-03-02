@@ -142,7 +142,7 @@ jobs:
     - name: Setup Docker (macOS)
       if: runner.os == 'macOS'
       env:
-        : ${{ secrets.GITHUB_TOKEN }}
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
         for i in {1..20}; do
           gh run download ${{ github.run_id }} --repo ${{ github.repository }} -n docker-port --dir . && break || sleep 5
