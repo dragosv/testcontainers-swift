@@ -91,9 +91,11 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: docker-port
+          retention-days: 1
           path: |
             docker-port.txt
             id_ed25519
+
       - name: Keep alive
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -111,7 +113,8 @@ jobs:
   # Build and test across multiple platforms and Swift versions
   build-and-test:
     name: Build and Test
-
+    needs: [docker-host]
+    if: always() # Still run Ubuntu jobs even if docker-host is skipped
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -139,7 +142,7 @@ jobs:
     - name: Setup Docker (macOS)
       if: runner.os == 'macOS'
       env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        : ${{ secrets.GITHUB_TOKEN }}
       run: |
         for i in {1..20}; do
           gh run download ${{ github.run_id }} --repo ${{ github.repository }} -n docker-port --dir . && break || sleep 5
@@ -175,6 +178,11 @@ jobs:
           echo "Waiting for docker... (attempt $i)"
           sleep 2
         done
+        
+        if ! docker system info > /dev/null 2>&1; then
+          echo "Docker never became ready after 30 attempts"
+          exit 1
+        fi
 
     - name: Setup Swift
       uses: swift-actions/setup-swift@v2
