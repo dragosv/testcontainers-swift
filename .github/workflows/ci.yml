@@ -94,7 +94,7 @@ jobs:
           
           sudo chown -R $USER:$USER ~/docker-images
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: docker-port
           retention-days: 1
@@ -210,7 +210,7 @@ jobs:
       run: swift test --configuration release --verbose --enable-code-coverage
 
     - name: Upload test results
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7
       if: failure()
       with:
         name: test-results-${{ matrix.os }}-swift-${{ matrix.swift }}
@@ -289,7 +289,7 @@ jobs:
         verbose: true
 
     - name: Upload coverage artifact
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7
       with:
         path: coverage.lcov
         retention-days: 30
@@ -359,7 +359,7 @@ jobs:
       continue-on-error: true
 
     - name: Upload documentation
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7
       with:
         name: documentation
         path: docs/
