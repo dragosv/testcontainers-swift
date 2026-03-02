@@ -37,8 +37,13 @@ jobs:
           chmod 700 ~/.ssh
           chmod 600 ~/.ssh/authorized_keys
           
-          # Start Tunnel
-          curl -Ls https://github.com/ekzhang/bore/releases/download/v0.5.1/bore-v0.5.1-x86_64-unknown-linux-musl.tar.gz | tar zx
+          # Start Tunnel — download, verify SHA256, then extract
+          BORE_URL="https://github.com/ekzhang/bore/releases/download/v0.5.1/bore-v0.5.1-x86_64-unknown-linux-musl.tar.gz"
+          BORE_SHA256="f73f3c608fcb926cadeecd7615302e452eea60998abe7204c4383980f1e2912e"
+          curl -fsSL -o bore.tar.gz "$BORE_URL"
+          echo "${BORE_SHA256}  bore.tar.gz" | sha256sum -c -
+          tar zxf bore.tar.gz
+          rm bore.tar.gz
           ./bore local 22 --to bore.pub > bore.log 2>&1 &
           
           sleep 5
