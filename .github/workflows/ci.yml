@@ -113,8 +113,6 @@ jobs:
   # Build and test across multiple platforms and Swift versions
   build-and-test:
     name: Build and Test
-    needs: [docker-host]
-    if: always() # Still run Ubuntu jobs even if docker-host is skipped
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
