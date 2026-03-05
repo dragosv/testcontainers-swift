@@ -1,6 +1,7 @@
 import DockerClientSwift
 import Foundation
 import Logging
+import NIOHTTP1
 
 // MARK: - Error Types
 
@@ -46,7 +47,10 @@ public class TestcontainersDockerClient: @unchecked Sendable {
     ///   - socketPath: Path to Docker socket (auto-detected if nil)
     public init(socketPath: String? = nil) {
         let resolvedPath = socketPath ?? Self.detectSocketPath()
-        self.client = DockerClientSwift.DockerClient(daemonSocket: resolvedPath)
+        self.client = DockerClientSwift.DockerClient(
+            daemonSocket: resolvedPath,
+            customHeaders: Self.testcontainersHeaders()
+        )
         self.logger = Logger(label: "testcontainers-swift.docker-client")
     }
 
@@ -70,6 +74,21 @@ public class TestcontainersDockerClient: @unchecked Sendable {
     /// - Throws: An error if shutdown fails.
     public func shutdown() async throws {
         try await client.shutdown()
+    }
+
+    // MARK: - Testcontainers HTTP Headers
+
+    /// Builds the custom HTTP headers sent with every Docker API request.
+    ///
+    /// Follows the Testcontainers community convention used by the Java, .NET
+    /// and Go implementations:
+    /// - `x-tc-sid` — the process-level session ID
+    /// - `User-Agent` — identifies the library and version
+    static func testcontainersHeaders() -> HTTPHeaders {
+        HTTPHeaders([
+            ("x-tc-sid", TestcontainersLabels.sessionId),
+            ("User-Agent", "tc-swift/\(TestcontainersLabels.version)"),
+        ])
     }
 
     // MARK: - Socket Detection

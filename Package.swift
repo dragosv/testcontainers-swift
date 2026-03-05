@@ -31,13 +31,18 @@ let package = Package(
             dependencies: [
                 "DockerClientSwift",
                 .product(name: "AsyncHTTPClient", package: "async-http-client"),
+                .product(name: "NIOHTTP1", package: "swift-nio"),
                 .product(name: "Logging", package: "swift-log"),
             ],
             path: "Sources/Testcontainers"
         ),
         .testTarget(
             name: "TestcontainersTests",
-            dependencies: ["Testcontainers"],
+            dependencies: [
+                "Testcontainers",
+                "DockerClientSwift",
+                .product(name: "NIOHTTP1", package: "swift-nio"),
+            ],
             path: "Tests"
         ),
     ]

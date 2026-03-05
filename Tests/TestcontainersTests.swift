@@ -1,3 +1,5 @@
+@testable import DockerClientSwift
+import NIOHTTP1
 import Testcontainers
 import XCTest
 
@@ -720,7 +722,6 @@ final class ContainerBuilderConfigurationTests: XCTestCase {
 // MARK: - Testcontainers Labels Tests
 
 final class TestcontainersLabelsTests: XCTestCase {
-
     // MARK: - Label Constants
 
     func testLabelBaseValue() {
@@ -861,5 +862,87 @@ final class TestcontainersLabelsTests: XCTestCase {
             container2.labels["org.testcontainers.sessionId"],
             "All containers in the same process should have the same session ID"
         )
+    }
+}
+
+// MARK: - Testcontainers HTTP Headers Tests
+
+final class TestcontainersHeadersTests: XCTestCase {
+    // MARK: - testcontainersHeaders()
+
+    func testHeadersContainSessionId() {
+        let headers = TestcontainersDockerClient.testcontainersHeaders()
+        let sid = headers["x-tc-sid"].first
+        XCTAssertNotNil(sid, "x-tc-sid header must be present")
+        XCTAssertEqual(sid, TestcontainersLabels.sessionId)
+    }
+
+    func testHeadersSessionIdIsValidUUID() throws {
+        let headers = TestcontainersDockerClient.testcontainersHeaders()
+        let sid = try XCTUnwrap(headers["x-tc-sid"].first)
+        XCTAssertNotNil(UUID(uuidString: sid), "x-tc-sid header must be a valid UUID")
+    }
+
+    func testHeadersContainUserAgent() throws {
+        let headers = TestcontainersDockerClient.testcontainersHeaders()
+        let ua = headers["User-Agent"].first
+        XCTAssertNotNil(ua, "User-Agent header must be present")
+        XCTAssertTrue(try XCTUnwrap(ua?.hasPrefix("tc-swift/")),
+                      "User-Agent should start with tc-swift/")
+    }
+
+    func testHeadersUserAgentIncludesVersion() throws {
+        let headers = TestcontainersDockerClient.testcontainersHeaders()
+        let ua = try XCTUnwrap(headers["User-Agent"].first)
+        XCTAssertEqual(ua, "tc-swift/\(TestcontainersLabels.version)")
+    }
+
+    func testHeadersAreStableAcrossCalls() {
+        let h1 = TestcontainersDockerClient.testcontainersHeaders()
+        let h2 = TestcontainersDockerClient.testcontainersHeaders()
+        XCTAssertEqual(h1["x-tc-sid"].first, h2["x-tc-sid"].first,
+                       "Session ID header should be stable")
+        XCTAssertEqual(h1["User-Agent"].first, h2["User-Agent"].first,
+                       "User-Agent header should be stable")
+    }
+
+    // MARK: - DockerClient.buildHeaders() with custom headers
+
+    func testBuildHeadersIncludesBaseHeaders() {
+        let client = DockerClientSwift.DockerClient(daemonSocket: "/dev/null")
+        let headers = client.buildHeaders()
+        XCTAssertEqual(headers["Content-Type"].first, "application/json")
+        XCTAssertEqual(headers["Host"].first, "localhost")
+    }
+
+    func testBuildHeadersWithCustomHeaders() {
+        let custom = HTTPHeaders([
+            ("x-tc-sid", "test-session-id"),
+            ("User-Agent", "tc-swift/0.1.0"),
+        ])
+        let client = DockerClientSwift.DockerClient(
+            daemonSocket: "/dev/null",
+            customHeaders: custom
+        )
+        let headers = client.buildHeaders()
+
+        // Custom headers present
+        XCTAssertEqual(headers["x-tc-sid"].first, "test-session-id")
+        XCTAssertEqual(headers["User-Agent"].first, "tc-swift/0.1.0")
+
+        // Base headers still present
+        XCTAssertEqual(headers["Content-Type"].first, "application/json")
+        XCTAssertEqual(headers["Host"].first, "localhost")
+    }
+
+    func testBuildHeadersWithNoCustomHeaders() {
+        let client = DockerClientSwift.DockerClient(
+            daemonSocket: "/dev/null",
+            customHeaders: HTTPHeaders()
+        )
+        let headers = client.buildHeaders()
+        XCTAssertEqual(headers["Content-Type"].first, "application/json")
+        XCTAssertEqual(headers["Host"].first, "localhost")
+        XCTAssertNil(headers["x-tc-sid"].first)
     }
 }

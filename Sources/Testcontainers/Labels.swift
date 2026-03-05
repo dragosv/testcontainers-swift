@@ -21,7 +21,6 @@ import Foundation
 /// ``ContainerBuilder`` and ``NetworkBuilder``. To retrieve the default label
 /// set programmatically, use ``TestcontainersLabels/defaultLabels``.
 public enum TestcontainersLabels {
-
     // MARK: - Label Keys
 
     /// Base label key identifying a resource as created by Testcontainers.
