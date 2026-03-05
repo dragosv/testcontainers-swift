@@ -94,6 +94,13 @@ public class TestcontainersDockerClient: @unchecked Sendable {
             return socket
         }
 
+        // 3. ~/.testcontainers.properties — standard Testcontainers properties file
+        //    used across all language implementations (Java, .NET, Go, etc.).
+        //    Supports `docker.host` and `tc.host` keys with unix:// URIs.
+        if let socket = socketPathFromTestcontainersProperties() {
+            return socket
+        }
+
         #if os(macOS)
         if FileManager.default.fileExists(atPath: "/var/run/docker.sock") {
             return "/var/run/docker.sock"
@@ -128,6 +135,67 @@ public class TestcontainersDockerClient: @unchecked Sendable {
         }
         let path = String(dockerHost.dropFirst(unixPrefix.count))
         return path.isEmpty ? nil : path
+    }
+
+    /// Reads `~/.testcontainers.properties` and returns a socket path if
+    /// `docker.host` or `tc.host` specifies a `unix://` endpoint.
+    ///
+    /// The properties file uses the standard Java-properties subset
+    /// (`key=value`, one per line, `#` comments) shared by every official
+    /// Testcontainers language implementation.  `docker.host` takes
+    /// precedence over `tc.host` when both are present.
+    private static func socketPathFromTestcontainersProperties() -> String? {
+        let home = FileManager.default.homeDirectoryForCurrentUser
+        let propertiesPath = home.appendingPathComponent(".testcontainers.properties").path
+        return socketPathFromProperties(atPath: propertiesPath)
+    }
+
+    /// Resolves a Docker socket path from a Testcontainers properties file
+    /// at the given path.  Returns `nil` when the file does not exist or
+    /// contains no usable `docker.host` / `tc.host` entry.
+    static func socketPathFromProperties(atPath path: String) -> String? {
+        guard let properties = loadProperties(atPath: path) else {
+            return nil
+        }
+
+        // docker.host is the preferred key; tc.host is the legacy alias.
+        for key in ["docker.host", "tc.host"] {
+            if let value = properties[key], !value.isEmpty {
+                if let socket = socketPath(fromDockerHost: value) {
+                    return socket
+                }
+                // A raw path (no scheme) is also accepted.
+                if value.hasPrefix("/") {
+                    return value
+                }
+            }
+        }
+        return nil
+    }
+
+    /// Parses a simple Java-style `.properties` file into a dictionary.
+    ///
+    /// Blank lines and lines starting with `#` are ignored.  Keys and
+    /// values are trimmed of surrounding whitespace.  Returns `nil` when
+    /// the file does not exist or cannot be read.
+    static func loadProperties(atPath path: String) -> [String: String]? {
+        guard let contents = try? String(contentsOfFile: path, encoding: .utf8) else {
+            return nil
+        }
+
+        var properties: [String: String] = [:]
+        for line in contents.split(separator: "\n", omittingEmptySubsequences: false) {
+            let trimmed = line.trimmingCharacters(in: .whitespaces)
+            if trimmed.isEmpty || trimmed.hasPrefix("#") {
+                continue
+            }
+            let parts = trimmed.split(separator: "=", maxSplits: 1, omittingEmptySubsequences: false)
+            guard parts.count == 2 else { continue }
+            let key = parts[0].trimmingCharacters(in: .whitespaces)
+            let value = parts[1].trimmingCharacters(in: .whitespaces)
+            properties[key] = value
+        }
+        return properties
     }
 
     // MARK: - Container Operations

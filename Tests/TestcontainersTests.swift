@@ -716,3 +716,206 @@ final class ContainerBuilderConfigurationTests: XCTestCase {
         XCTAssertEqual(container.labels["env"], "test")
     }
 }
+
+// MARK: - Testcontainers Properties Tests
+
+final class TestcontainersPropertiesTests: XCTestCase {
+    private var tempDir: URL!
+
+    override func setUp() {
+        super.setUp()
+        tempDir = FileManager.default.temporaryDirectory
+            .appendingPathComponent("tc-properties-\(UUID().uuidString)")
+        try? FileManager.default.createDirectory(at: tempDir, withIntermediateDirectories: true)
+    }
+
+    override func tearDown() {
+        if let tempDir {
+            try? FileManager.default.removeItem(at: tempDir)
+        }
+        super.tearDown()
+    }
+
+    private func writeTempProperties(_ content: String) -> String {
+        let path = tempDir.appendingPathComponent(".testcontainers.properties").path
+        FileManager.default.createFile(atPath: path, contents: content.data(using: .utf8))
+        return path
+    }
+
+    // MARK: - loadProperties
+
+    func testLoadPropertiesParsesKeyValuePairs() {
+        let path = writeTempProperties("""
+        docker.host=unix:///var/run/docker.sock
+        tc.host=unix:///tmp/other.sock
+        """)
+
+        let props = TestcontainersDockerClient.loadProperties(atPath: path)
+        XCTAssertNotNil(props)
+        XCTAssertEqual(props?["docker.host"], "unix:///var/run/docker.sock")
+        XCTAssertEqual(props?["tc.host"], "unix:///tmp/other.sock")
+    }
+
+    func testLoadPropertiesIgnoresComments() {
+        let path = writeTempProperties("""
+        # This is a comment
+        docker.host=unix:///var/run/docker.sock
+        # Another comment
+        """)
+
+        let props = TestcontainersDockerClient.loadProperties(atPath: path)
+        XCTAssertEqual(props?.count, 1)
+        XCTAssertEqual(props?["docker.host"], "unix:///var/run/docker.sock")
+    }
+
+    func testLoadPropertiesIgnoresBlankLines() {
+        let path = writeTempProperties("""
+        docker.host=unix:///var/run/docker.sock
+
+        tc.host=unix:///tmp/other.sock
+
+        """)
+
+        let props = TestcontainersDockerClient.loadProperties(atPath: path)
+        XCTAssertEqual(props?.count, 2)
+    }
+
+    func testLoadPropertiesTrimsWhitespace() {
+        let path = writeTempProperties("  docker.host  =  unix:///var/run/docker.sock  \n")
+
+        let props = TestcontainersDockerClient.loadProperties(atPath: path)
+        XCTAssertEqual(props?["docker.host"], "unix:///var/run/docker.sock")
+    }
+
+    func testLoadPropertiesHandlesEqualsInValue() {
+        let path = writeTempProperties("some.key=value=with=equals\n")
+
+        let props = TestcontainersDockerClient.loadProperties(atPath: path)
+        XCTAssertEqual(props?["some.key"], "value=with=equals")
+    }
+
+    func testLoadPropertiesReturnsNilForMissingFile() {
+        let props = TestcontainersDockerClient.loadProperties(atPath: "/nonexistent/path/.testcontainers.properties")
+        XCTAssertNil(props)
+    }
+
+    // MARK: - socketPathFromProperties
+
+    func testSocketPathFromPropertiesWithDockerHost() {
+        let path = writeTempProperties("docker.host=unix:///var/run/docker.sock\n")
+
+        let socket = TestcontainersDockerClient.socketPathFromProperties(atPath: path)
+        XCTAssertEqual(socket, "/var/run/docker.sock")
+    }
+
+    func testSocketPathFromPropertiesWithTcHost() {
+        let path = writeTempProperties("tc.host=unix:///tmp/tc.sock\n")
+
+        let socket = TestcontainersDockerClient.socketPathFromProperties(atPath: path)
+        XCTAssertEqual(socket, "/tmp/tc.sock")
+    }
+
+    func testSocketPathFromPropertiesDockerHostTakesPrecedenceOverTcHost() {
+        let path = writeTempProperties("""
+        docker.host=unix:///var/run/docker.sock
+        tc.host=unix:///tmp/tc.sock
+        """)
+
+        let socket = TestcontainersDockerClient.socketPathFromProperties(atPath: path)
+        XCTAssertEqual(socket, "/var/run/docker.sock")
+    }
+
+    func testSocketPathFromPropertiesWithRawPath() {
+        let path = writeTempProperties("docker.host=/var/run/docker.sock\n")
+
+        let socket = TestcontainersDockerClient.socketPathFromProperties(atPath: path)
+        XCTAssertEqual(socket, "/var/run/docker.sock")
+    }
+
+    func testSocketPathFromPropertiesIgnoresNonUnixSchemes() {
+        let path = writeTempProperties("docker.host=tcp://localhost:2375\n")
+
+        let socket = TestcontainersDockerClient.socketPathFromProperties(atPath: path)
+        XCTAssertNil(socket)
+    }
+
+    func testSocketPathFromPropertiesReturnsNilForMissingFile() {
+        let socket = TestcontainersDockerClient.socketPathFromProperties(
+            atPath: "/nonexistent/path/.testcontainers.properties"
+        )
+        XCTAssertNil(socket)
+    }
+
+    func testSocketPathFromPropertiesReturnsNilForEmptyFile() {
+        let path = writeTempProperties("")
+
+        let socket = TestcontainersDockerClient.socketPathFromProperties(atPath: path)
+        XCTAssertNil(socket)
+    }
+
+    func testSocketPathFromPropertiesReturnsNilForIrrelevantKeys() {
+        let path = writeTempProperties("ryuk.disabled=true\n")
+
+        let socket = TestcontainersDockerClient.socketPathFromProperties(atPath: path)
+        XCTAssertNil(socket)
+    }
+
+    func testSocketPathFromPropertiesSkipsCommentsAndBlankLines() {
+        let path = writeTempProperties("""
+        # Default configuration
+        ryuk.disabled=true
+
+        # Docker host
+        docker.host=unix:///var/run/docker.sock
+        """)
+
+        let socket = TestcontainersDockerClient.socketPathFromProperties(atPath: path)
+        XCTAssertEqual(socket, "/var/run/docker.sock")
+    }
+
+    // MARK: - Integration: Docker connectivity via properties file
+
+    func testDockerClientConnectsViaPropertiesFile() async throws {
+        // Write a properties file pointing to the actual Docker socket
+        // detected by the current client, then create a new client via
+        // that path and verify Docker is reachable.
+        let currentClient = DockerClient.getInstance()
+        let isReachable = try await currentClient.ping()
+        guard isReachable else {
+            throw XCTSkip("Docker is not running — cannot verify properties-based connectivity.")
+        }
+
+        // Resolve the real socket path by examining the environment in the
+        // same order as detectSocketPath(), falling back to the default.
+        let socketPath = ProcessInfo.processInfo.environment["DOCKER_SOCK"]
+            ?? Self.unixSocketPath(from: ProcessInfo.processInfo.environment["DOCKER_HOST"])
+            ?? Self.firstExistingPath([
+                "/var/run/docker.sock",
+                "\(NSHomeDirectory())/.docker/run/docker.sock",
+                "\(NSHomeDirectory())/.colima/default/docker.sock",
+            ])
+            ?? "/var/run/docker.sock"
+
+        let propsPath = writeTempProperties("docker.host=unix://\(socketPath)\n")
+
+        let resolved = TestcontainersDockerClient.socketPathFromProperties(atPath: propsPath)
+        XCTAssertEqual(resolved, socketPath, "Properties file should resolve to the real Docker socket")
+
+        // Create a fresh client using the resolved path and ping Docker
+        let freshClient = TestcontainersDockerClient(socketPath: resolved)
+        let reachable = try await freshClient.ping()
+        XCTAssertTrue(reachable, "Docker should be reachable via socket resolved from .testcontainers.properties")
+    }
+
+    // MARK: - Helpers
+
+    private static func unixSocketPath(from dockerHost: String?) -> String? {
+        guard let host = dockerHost, host.hasPrefix("unix://") else { return nil }
+        let path = String(host.dropFirst("unix://".count))
+        return path.isEmpty ? nil : path
+    }
+
+    private static func firstExistingPath(_ paths: [String]) -> String? {
+        paths.first { FileManager.default.fileExists(atPath: $0) }
+    }
+}
