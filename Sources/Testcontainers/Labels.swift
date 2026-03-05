@@ -44,8 +44,10 @@ public enum TestcontainersLabels {
 
     /// The version of the testcontainers-swift library.
     ///
-    /// Update this value when releasing a new version.
-    public static let version = "0.1.0"
+    /// This is the single source of truth for the library version, referenced
+    /// by labels, HTTP headers, and User-Agent strings. Update this constant
+    /// when cutting a new release.
+    public static let version = PackageVersion.current
 
     /// A process-level session ID generated once and reused for the lifetime of the process.
     ///

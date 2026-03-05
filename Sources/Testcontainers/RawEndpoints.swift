@@ -89,8 +89,8 @@ struct RawCreateNetworkEndpoint: Endpoint {
     var method: HTTPMethod = .POST
     var body: CreateNetworkBody?
 
-    init(name: String, driver: String) {
-        self.body = CreateNetworkBody(Name: name, Driver: driver)
+    init(name: String, driver: String, labels: [String: String] = [:]) {
+        self.body = CreateNetworkBody(Name: name, Driver: driver, Labels: labels.isEmpty ? nil : labels)
     }
 
     var path: String {
@@ -100,6 +100,7 @@ struct RawCreateNetworkEndpoint: Endpoint {
     struct CreateNetworkBody: Codable {
         let Name: String
         let Driver: String
+        let Labels: [String: String]?
     }
 
     struct CreateNetworkResponse: Codable {

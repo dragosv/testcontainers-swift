@@ -110,7 +110,7 @@ public class NetworkBuilder {
     public func build() async throws -> DockerNetworkImpl {
         var mergedLabels = labels
         TestcontainersLabels.addDefaultLabels(to: &mergedLabels)
-        let networkId = try await client.createNetwork(name: name, driver: driver)
+        let networkId = try await client.createNetwork(name: name, driver: driver, labels: mergedLabels)
         return DockerNetworkImpl(id: networkId, name: name, driver: driver, client: client)
     }
 }
