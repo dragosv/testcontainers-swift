@@ -322,12 +322,14 @@ public class ContainerBuilder {
     /// Builds a container instance without creating it in Docker.
     /// - Returns: A container instance.
     public func build() -> Container {
-        DockerContainerImpl(
+        var mergedLabels = labels
+        TestcontainersLabels.addDefaultLabels(to: &mergedLabels)
+        return DockerContainerImpl(
             id: UUID().uuidString,
             image: image,
             client: client,
             name: name,
-            labels: labels
+            labels: mergedLabels
         )
     }
 
@@ -340,10 +342,14 @@ public class ContainerBuilder {
         // Pull the image first
         try await client.pullImage(image: image)
 
+        // Merge standard Testcontainers labels with user-defined labels
+        var mergedLabels = labels
+        TestcontainersLabels.addDefaultLabels(to: &mergedLabels)
+
         // Create Container configuration
         var request = CreateContainerRequest(image: image)
         request.hostname = name
-        request.labels = labels
+        request.labels = mergedLabels
 
         // Set environment variables
         if !environment.isEmpty {
@@ -388,7 +394,7 @@ public class ContainerBuilder {
             image: image,
             client: client,
             name: name,
-            labels: labels
+            labels: mergedLabels
         )
 
         // Connect to network if specified

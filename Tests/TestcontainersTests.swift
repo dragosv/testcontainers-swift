@@ -716,3 +716,150 @@ final class ContainerBuilderConfigurationTests: XCTestCase {
         XCTAssertEqual(container.labels["env"], "test")
     }
 }
+
+// MARK: - Testcontainers Labels Tests
+
+final class TestcontainersLabelsTests: XCTestCase {
+
+    // MARK: - Label Constants
+
+    func testLabelBaseValue() {
+        XCTAssertEqual(TestcontainersLabels.labelBase, "org.testcontainers")
+    }
+
+    func testLabelLangValue() {
+        XCTAssertEqual(TestcontainersLabels.labelLang, "org.testcontainers.lang")
+    }
+
+    func testLabelVersionValue() {
+        XCTAssertEqual(TestcontainersLabels.labelVersion, "org.testcontainers.version")
+    }
+
+    func testLabelSessionIdValue() {
+        XCTAssertEqual(TestcontainersLabels.labelSessionId, "org.testcontainers.sessionId")
+    }
+
+    func testLangIsSwift() {
+        XCTAssertEqual(TestcontainersLabels.lang, "swift")
+    }
+
+    func testVersionIsNotEmpty() {
+        XCTAssertFalse(TestcontainersLabels.version.isEmpty)
+    }
+
+    // MARK: - Session ID
+
+    func testSessionIdIsNonEmpty() {
+        XCTAssertFalse(TestcontainersLabels.sessionId.isEmpty)
+    }
+
+    func testSessionIdIsValidUUID() {
+        // Session ID should be a valid UUID string
+        XCTAssertNotNil(UUID(uuidString: TestcontainersLabels.sessionId))
+    }
+
+    func testSessionIdIsStableAcrossCalls() {
+        let firstCall = TestcontainersLabels.sessionId
+        let secondCall = TestcontainersLabels.sessionId
+        XCTAssertEqual(firstCall, secondCall, "Session ID should be stable within the same process")
+    }
+
+    // MARK: - Default Labels
+
+    func testDefaultLabelsContainsAllFourKeys() {
+        let labels = TestcontainersLabels.defaultLabels
+        XCTAssertEqual(labels.count, 4)
+        XCTAssertNotNil(labels[TestcontainersLabels.labelBase])
+        XCTAssertNotNil(labels[TestcontainersLabels.labelLang])
+        XCTAssertNotNil(labels[TestcontainersLabels.labelVersion])
+        XCTAssertNotNil(labels[TestcontainersLabels.labelSessionId])
+    }
+
+    func testDefaultLabelsValues() {
+        let labels = TestcontainersLabels.defaultLabels
+        XCTAssertEqual(labels[TestcontainersLabels.labelBase], "true")
+        XCTAssertEqual(labels[TestcontainersLabels.labelLang], "swift")
+        XCTAssertEqual(labels[TestcontainersLabels.labelVersion], TestcontainersLabels.version)
+        XCTAssertEqual(labels[TestcontainersLabels.labelSessionId], TestcontainersLabels.sessionId)
+    }
+
+    // MARK: - addDefaultLabels
+
+    func testAddDefaultLabelsToEmptyDictionary() {
+        var labels: [String: String] = [:]
+        TestcontainersLabels.addDefaultLabels(to: &labels)
+        XCTAssertEqual(labels.count, 4)
+        XCTAssertEqual(labels["org.testcontainers"], "true")
+        XCTAssertEqual(labels["org.testcontainers.lang"], "swift")
+    }
+
+    func testAddDefaultLabelsPreservesUserLabels() {
+        var labels: [String: String] = ["app": "myapp", "env": "test"]
+        TestcontainersLabels.addDefaultLabels(to: &labels)
+        XCTAssertEqual(labels["app"], "myapp")
+        XCTAssertEqual(labels["env"], "test")
+        XCTAssertEqual(labels["org.testcontainers"], "true")
+        XCTAssertEqual(labels.count, 6) // 2 user + 4 standard
+    }
+
+    func testAddDefaultLabelsDoesNotOverwriteUserLabels() {
+        var labels: [String: String] = [
+            "org.testcontainers": "custom",
+            "org.testcontainers.lang": "custom-lang",
+        ]
+        TestcontainersLabels.addDefaultLabels(to: &labels)
+        XCTAssertEqual(labels["org.testcontainers"], "custom",
+                       "User-defined label should not be overwritten")
+        XCTAssertEqual(labels["org.testcontainers.lang"], "custom-lang",
+                       "User-defined label should not be overwritten")
+        // But the missing keys should still be added
+        XCTAssertNotNil(labels["org.testcontainers.version"])
+        XCTAssertNotNil(labels["org.testcontainers.sessionId"])
+    }
+
+    // MARK: - ContainerBuilder Integration
+
+    func testBuilderBuildIncludesStandardLabels() {
+        let container = ContainerBuilder("alpine:latest").build()
+
+        XCTAssertEqual(container.labels["org.testcontainers"], "true")
+        XCTAssertEqual(container.labels["org.testcontainers.lang"], "swift")
+        XCTAssertEqual(container.labels["org.testcontainers.version"], TestcontainersLabels.version)
+        XCTAssertEqual(container.labels["org.testcontainers.sessionId"], TestcontainersLabels.sessionId)
+    }
+
+    func testBuilderBuildWithUserLabelsIncludesBoth() {
+        let container = ContainerBuilder("alpine:latest")
+            .withLabel("app", "myapp")
+            .withLabel("env", "test")
+            .build()
+
+        // User labels present
+        XCTAssertEqual(container.labels["app"], "myapp")
+        XCTAssertEqual(container.labels["env"], "test")
+
+        // Standard labels present
+        XCTAssertEqual(container.labels["org.testcontainers"], "true")
+        XCTAssertEqual(container.labels["org.testcontainers.lang"], "swift")
+    }
+
+    func testBuilderBuildUserLabelsNotOverwritten() {
+        let container = ContainerBuilder("alpine:latest")
+            .withLabel("org.testcontainers", "custom-value")
+            .build()
+
+        XCTAssertEqual(container.labels["org.testcontainers"], "custom-value",
+                       "User-defined standard label should not be overwritten by defaults")
+    }
+
+    func testAllContainersShareSameSessionId() {
+        let container1 = ContainerBuilder("alpine:latest").build()
+        let container2 = ContainerBuilder("nginx:latest").build()
+
+        XCTAssertEqual(
+            container1.labels["org.testcontainers.sessionId"],
+            container2.labels["org.testcontainers.sessionId"],
+            "All containers in the same process should have the same session ID"
+        )
+    }
+}
