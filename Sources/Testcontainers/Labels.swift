@@ -15,6 +15,9 @@ import Foundation
 /// | ``labelLang`` | Identifies the language of the Testcontainers library |
 /// | ``labelVersion`` | The version of the Testcontainers library |
 /// | ``labelSessionId`` | The unique session ID for the current process |
+/// | ``labelReaper`` | Identifies a resource-reaper (Ryuk) container |
+/// | ``labelRyuk`` | Identifies a Ryuk container (alias of ``labelReaper``) |
+/// | ``labelReap`` | Marks a resource for automatic cleanup by the reaper |
 ///
 /// ## Usage
 /// Labels are automatically applied to containers and networks created through
@@ -36,6 +39,26 @@ public enum TestcontainersLabels {
 
     /// Label key containing the unique session ID for the current test process.
     public static let labelSessionId = labelBase + ".sessionId"
+
+    /// Label key identifying a resource-reaper (Ryuk) container.
+    ///
+    /// Set to `"true"` on the reaper sidecar container itself. Reserved for
+    /// future use when the Swift implementation adds Ryuk support.
+    public static let labelReaper = labelBase + ".reaper"
+
+    /// Label key identifying a Ryuk container (alias of ``labelReaper``).
+    ///
+    /// Some Testcontainers implementations use this label instead of, or in
+    /// addition to, ``labelReaper``.
+    public static let labelRyuk = labelBase + ".ryuk"
+
+    /// Label key indicating a resource should be reaped by the resource reaper.
+    ///
+    /// When Ryuk is enabled, containers and networks tagged with this label
+    /// (value `"true"`) will be automatically cleaned up after the session
+    /// ends. Currently a no-op in testcontainers-swift because the resource
+    /// reaper is not yet implemented.
+    public static let labelReap = labelBase + ".reap"
 
     // MARK: - Values
 

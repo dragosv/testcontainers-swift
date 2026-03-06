@@ -740,6 +740,18 @@ final class TestcontainersLabelsTests: XCTestCase {
         XCTAssertEqual(TestcontainersLabels.labelSessionId, "org.testcontainers.sessionId")
     }
 
+    func testLabelReaperValue() {
+        XCTAssertEqual(TestcontainersLabels.labelReaper, "org.testcontainers.reaper")
+    }
+
+    func testLabelRyukValue() {
+        XCTAssertEqual(TestcontainersLabels.labelRyuk, "org.testcontainers.ryuk")
+    }
+
+    func testLabelReapValue() {
+        XCTAssertEqual(TestcontainersLabels.labelReap, "org.testcontainers.reap")
+    }
+
     func testLangIsSwift() {
         XCTAssertEqual(TestcontainersLabels.lang, "swift")
     }
