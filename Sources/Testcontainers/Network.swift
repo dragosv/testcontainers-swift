@@ -54,6 +54,7 @@ public class NetworkBuilder {
     private let name: String
     private var driver: String = "bridge"
     private var Internal: Bool = false
+    private var labels: [String: String] = [:]
     private let client: DockerClient
 
     /// Initializes a new network builder.
@@ -81,11 +82,35 @@ public class NetworkBuilder {
         return self
     }
 
+    /// Sets a single label on the network.
+    /// - Parameters:
+    ///   - key: The label key.
+    ///   - value: The label value.
+    /// - Returns: The builder instance for chaining.
+    @discardableResult
+    public func withLabel(_ key: String, _ value: String) -> NetworkBuilder {
+        labels[key] = value
+        return self
+    }
+
+    /// Sets multiple labels on the network from a dictionary.
+    /// - Parameter labels: A dictionary of labels.
+    /// - Returns: The builder instance for chaining.
+    @discardableResult
+    public func withLabel(_ labels: [String: String]) -> NetworkBuilder {
+        self.labels.merge(labels) { _, new in new }
+        return self
+    }
+
     /// Builds and creates the network.
+    ///
+    /// Standard Testcontainers labels are automatically applied to the network.
     /// - Returns: A Docker network instance.
     /// - Throws: An error if network creation fails.
     public func build() async throws -> DockerNetworkImpl {
-        let networkId = try await client.createNetwork(name: name, driver: driver)
+        var mergedLabels = labels
+        TestcontainersLabels.addDefaultLabels(to: &mergedLabels)
+        let networkId = try await client.createNetwork(name: name, driver: driver, labels: mergedLabels)
         return DockerNetworkImpl(id: networkId, name: name, driver: driver, client: client)
     }
 }

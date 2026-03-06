@@ -1,4 +1,6 @@
-import Testcontainers
+@testable import DockerClientSwift
+import NIOHTTP1
+@testable import Testcontainers
 import XCTest
 
 final class ContainerTests: XCTestCase {
@@ -659,7 +661,7 @@ final class ContainerBuilderConfigurationTests: XCTestCase {
             .withLabel(["app": "web", "env": "test", "tier": "frontend"])
 
         let container = builder.build()
-        XCTAssertEqual(container.labels.count, 3)
+        XCTAssertGreaterThanOrEqual(container.labels.count, 3)
         XCTAssertEqual(container.labels["app"], "web")
         XCTAssertEqual(container.labels["env"], "test")
         XCTAssertEqual(container.labels["tier"], "frontend")
@@ -714,5 +716,245 @@ final class ContainerBuilderConfigurationTests: XCTestCase {
         XCTAssertEqual(container.image, "postgres:15")
         XCTAssertEqual(container.labels["app"], "database")
         XCTAssertEqual(container.labels["env"], "test")
+    }
+}
+
+// MARK: - Testcontainers Labels Tests
+
+final class TestcontainersLabelsTests: XCTestCase {
+    // MARK: - Label Constants
+
+    func testLabelBaseValue() {
+        XCTAssertEqual(TestcontainersLabels.labelBase, "org.testcontainers")
+    }
+
+    func testLabelLangValue() {
+        XCTAssertEqual(TestcontainersLabels.labelLang, "org.testcontainers.lang")
+    }
+
+    func testLabelVersionValue() {
+        XCTAssertEqual(TestcontainersLabels.labelVersion, "org.testcontainers.version")
+    }
+
+    func testLabelSessionIdValue() {
+        XCTAssertEqual(TestcontainersLabels.labelSessionId, "org.testcontainers.sessionId")
+    }
+
+    func testLabelReaperValue() {
+        XCTAssertEqual(TestcontainersLabels.labelReaper, "org.testcontainers.reaper")
+    }
+
+    func testLabelRyukValue() {
+        XCTAssertEqual(TestcontainersLabels.labelRyuk, "org.testcontainers.ryuk")
+    }
+
+    func testLabelReapValue() {
+        XCTAssertEqual(TestcontainersLabels.labelReap, "org.testcontainers.reap")
+    }
+
+    func testLangIsSwift() {
+        XCTAssertEqual(TestcontainersLabels.lang, "swift")
+    }
+
+    func testVersionIsNotEmpty() {
+        XCTAssertFalse(TestcontainersLabels.version.isEmpty)
+    }
+
+    // MARK: - Session ID
+
+    func testSessionIdIsNonEmpty() {
+        XCTAssertFalse(TestcontainersLabels.sessionId.isEmpty)
+    }
+
+    func testSessionIdIsValidUUID() {
+        // Session ID should be a valid UUID string
+        XCTAssertNotNil(UUID(uuidString: TestcontainersLabels.sessionId))
+    }
+
+    func testSessionIdIsStableAcrossCalls() {
+        let firstCall = TestcontainersLabels.sessionId
+        let secondCall = TestcontainersLabels.sessionId
+        XCTAssertEqual(firstCall, secondCall, "Session ID should be stable within the same process")
+    }
+
+    // MARK: - Default Labels
+
+    func testDefaultLabelsContainsAllFourKeys() {
+        let labels = TestcontainersLabels.defaultLabels
+        XCTAssertEqual(labels.count, 4)
+        XCTAssertNotNil(labels[TestcontainersLabels.labelBase])
+        XCTAssertNotNil(labels[TestcontainersLabels.labelLang])
+        XCTAssertNotNil(labels[TestcontainersLabels.labelVersion])
+        XCTAssertNotNil(labels[TestcontainersLabels.labelSessionId])
+    }
+
+    func testDefaultLabelsValues() {
+        let labels = TestcontainersLabels.defaultLabels
+        XCTAssertEqual(labels[TestcontainersLabels.labelBase], "true")
+        XCTAssertEqual(labels[TestcontainersLabels.labelLang], "swift")
+        XCTAssertEqual(labels[TestcontainersLabels.labelVersion], TestcontainersLabels.version)
+        XCTAssertEqual(labels[TestcontainersLabels.labelSessionId], TestcontainersLabels.sessionId)
+    }
+
+    // MARK: - addDefaultLabels
+
+    func testAddDefaultLabelsToEmptyDictionary() {
+        var labels: [String: String] = [:]
+        TestcontainersLabels.addDefaultLabels(to: &labels)
+        XCTAssertEqual(labels.count, 4)
+        XCTAssertEqual(labels["org.testcontainers"], "true")
+        XCTAssertEqual(labels["org.testcontainers.lang"], "swift")
+    }
+
+    func testAddDefaultLabelsPreservesUserLabels() {
+        var labels: [String: String] = ["app": "myapp", "env": "test"]
+        TestcontainersLabels.addDefaultLabels(to: &labels)
+        XCTAssertEqual(labels["app"], "myapp")
+        XCTAssertEqual(labels["env"], "test")
+        XCTAssertEqual(labels["org.testcontainers"], "true")
+        XCTAssertEqual(labels.count, 6) // 2 user + 4 standard
+    }
+
+    func testAddDefaultLabelsDoesNotOverwriteUserLabels() {
+        var labels: [String: String] = [
+            "org.testcontainers": "custom",
+            "org.testcontainers.lang": "custom-lang",
+        ]
+        TestcontainersLabels.addDefaultLabels(to: &labels)
+        XCTAssertEqual(labels["org.testcontainers"], "custom",
+                       "User-defined label should not be overwritten")
+        XCTAssertEqual(labels["org.testcontainers.lang"], "custom-lang",
+                       "User-defined label should not be overwritten")
+        // But the missing keys should still be added
+        XCTAssertNotNil(labels["org.testcontainers.version"])
+        XCTAssertNotNil(labels["org.testcontainers.sessionId"])
+    }
+
+    // MARK: - ContainerBuilder Integration
+
+    func testBuilderBuildIncludesStandardLabels() {
+        let container = ContainerBuilder("alpine:latest").build()
+
+        XCTAssertEqual(container.labels["org.testcontainers"], "true")
+        XCTAssertEqual(container.labels["org.testcontainers.lang"], "swift")
+        XCTAssertEqual(container.labels["org.testcontainers.version"], TestcontainersLabels.version)
+        XCTAssertEqual(container.labels["org.testcontainers.sessionId"], TestcontainersLabels.sessionId)
+    }
+
+    func testBuilderBuildWithUserLabelsIncludesBoth() {
+        let container = ContainerBuilder("alpine:latest")
+            .withLabel("app", "myapp")
+            .withLabel("env", "test")
+            .build()
+
+        // User labels present
+        XCTAssertEqual(container.labels["app"], "myapp")
+        XCTAssertEqual(container.labels["env"], "test")
+
+        // Standard labels present
+        XCTAssertEqual(container.labels["org.testcontainers"], "true")
+        XCTAssertEqual(container.labels["org.testcontainers.lang"], "swift")
+    }
+
+    func testBuilderBuildUserLabelsNotOverwritten() {
+        let container = ContainerBuilder("alpine:latest")
+            .withLabel("org.testcontainers", "custom-value")
+            .build()
+
+        XCTAssertEqual(container.labels["org.testcontainers"], "custom-value",
+                       "User-defined standard label should not be overwritten by defaults")
+    }
+
+    func testAllContainersShareSameSessionId() {
+        let container1 = ContainerBuilder("alpine:latest").build()
+        let container2 = ContainerBuilder("nginx:latest").build()
+
+        XCTAssertEqual(
+            container1.labels["org.testcontainers.sessionId"],
+            container2.labels["org.testcontainers.sessionId"],
+            "All containers in the same process should have the same session ID"
+        )
+    }
+}
+
+// MARK: - Testcontainers HTTP Headers Tests
+
+final class TestcontainersHeadersTests: XCTestCase {
+    // MARK: - testcontainersHeaders()
+
+    func testHeadersContainSessionId() {
+        let headers = TestcontainersDockerClient.testcontainersHeaders()
+        let sid = headers["x-tc-sid"].first
+        XCTAssertNotNil(sid, "x-tc-sid header must be present")
+        XCTAssertEqual(sid, TestcontainersLabels.sessionId)
+    }
+
+    func testHeadersSessionIdIsValidUUID() throws {
+        let headers = TestcontainersDockerClient.testcontainersHeaders()
+        let sid = try XCTUnwrap(headers["x-tc-sid"].first)
+        XCTAssertNotNil(UUID(uuidString: sid), "x-tc-sid header must be a valid UUID")
+    }
+
+    func testHeadersContainUserAgent() throws {
+        let headers = TestcontainersDockerClient.testcontainersHeaders()
+        let ua = headers["User-Agent"].first
+        XCTAssertNotNil(ua, "User-Agent header must be present")
+        XCTAssertTrue(try XCTUnwrap(ua?.hasPrefix("tc-swift/")),
+                      "User-Agent should start with tc-swift/")
+    }
+
+    func testHeadersUserAgentIncludesVersion() throws {
+        let headers = TestcontainersDockerClient.testcontainersHeaders()
+        let ua = try XCTUnwrap(headers["User-Agent"].first)
+        XCTAssertEqual(ua, "tc-swift/\(TestcontainersLabels.version)")
+    }
+
+    func testHeadersAreStableAcrossCalls() {
+        let h1 = TestcontainersDockerClient.testcontainersHeaders()
+        let h2 = TestcontainersDockerClient.testcontainersHeaders()
+        XCTAssertEqual(h1["x-tc-sid"].first, h2["x-tc-sid"].first,
+                       "Session ID header should be stable")
+        XCTAssertEqual(h1["User-Agent"].first, h2["User-Agent"].first,
+                       "User-Agent header should be stable")
+    }
+
+    // MARK: - DockerClient.buildHeaders() with custom headers
+
+    func testBuildHeadersIncludesBaseHeaders() {
+        let client = DockerClientSwift.DockerClient(daemonSocket: "/dev/null")
+        let headers = client.buildHeaders()
+        XCTAssertEqual(headers["Content-Type"].first, "application/json")
+        XCTAssertEqual(headers["Host"].first, "localhost")
+    }
+
+    func testBuildHeadersWithCustomHeaders() {
+        let custom = HTTPHeaders([
+            ("x-tc-sid", "test-session-id"),
+            ("User-Agent", "tc-swift/0.1.0"),
+        ])
+        let client = DockerClientSwift.DockerClient(
+            daemonSocket: "/dev/null",
+            customHeaders: custom
+        )
+        let headers = client.buildHeaders()
+
+        // Custom headers present
+        XCTAssertEqual(headers["x-tc-sid"].first, "test-session-id")
+        XCTAssertEqual(headers["User-Agent"].first, "tc-swift/0.1.0")
+
+        // Base headers still present
+        XCTAssertEqual(headers["Content-Type"].first, "application/json")
+        XCTAssertEqual(headers["Host"].first, "localhost")
+    }
+
+    func testBuildHeadersWithNoCustomHeaders() {
+        let client = DockerClientSwift.DockerClient(
+            daemonSocket: "/dev/null",
+            customHeaders: HTTPHeaders()
+        )
+        let headers = client.buildHeaders()
+        XCTAssertEqual(headers["Content-Type"].first, "application/json")
+        XCTAssertEqual(headers["Host"].first, "localhost")
+        XCTAssertNil(headers["x-tc-sid"].first)
     }
 }

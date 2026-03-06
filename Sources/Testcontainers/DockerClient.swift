@@ -1,6 +1,7 @@
 import DockerClientSwift
 import Foundation
 import Logging
+import NIOHTTP1
 
 // MARK: - Error Types
 
@@ -25,7 +26,7 @@ public enum DockerClientError: Error {
 /// A Docker client wrapper for Testcontainers, built on top of DockerClientSwift.
 /// Provides container lifecycle management, image operations, and network support.
 public class TestcontainersDockerClient: @unchecked Sendable {
-    private struct SharedState: Sendable {
+    private enum SharedState {
         static let lock = NSLock()
         // Use a mutable class wrapper stored inside the lock-protected section
     }
@@ -46,7 +47,10 @@ public class TestcontainersDockerClient: @unchecked Sendable {
     ///   - socketPath: Path to Docker socket (auto-detected if nil)
     public init(socketPath: String? = nil) {
         let resolvedPath = socketPath ?? Self.detectSocketPath()
-        self.client = DockerClientSwift.DockerClient(daemonSocket: resolvedPath)
+        self.client = DockerClientSwift.DockerClient(
+            daemonSocket: resolvedPath,
+            customHeaders: Self.testcontainersHeaders()
+        )
         self.logger = Logger(label: "testcontainers-swift.docker-client")
     }
 
@@ -70,6 +74,21 @@ public class TestcontainersDockerClient: @unchecked Sendable {
     /// - Throws: An error if shutdown fails.
     public func shutdown() async throws {
         try await client.shutdown()
+    }
+
+    // MARK: - Testcontainers HTTP Headers
+
+    /// Builds the custom HTTP headers sent with every Docker API request.
+    ///
+    /// Follows the Testcontainers community convention used by the Java, .NET
+    /// and Go implementations:
+    /// - `x-tc-sid` — the process-level session ID
+    /// - `User-Agent` — identifies the library and version
+    static func testcontainersHeaders() -> HTTPHeaders {
+        HTTPHeaders([
+            ("x-tc-sid", TestcontainersLabels.sessionId),
+            ("User-Agent", "tc-swift/\(TestcontainersLabels.version)"),
+        ])
     }
 
     // MARK: - Socket Detection
@@ -312,11 +331,15 @@ public class TestcontainersDockerClient: @unchecked Sendable {
     /// - Parameters:
     ///   - name: The network name.
     ///   - driver: The network driver, defaults to "bridge".
+    ///   - labels: Labels to attach to the network.
     /// - Returns: The ID of the created network.
     /// - Throws: An error if network creation fails.
-    public func createNetwork(name: String, driver: String = "bridge") async throws -> String {
+    public func createNetwork(name: String, driver: String = "bridge",
+                              labels: [String: String] = [:]) async throws
+        -> String
+    {
         // DockerClientSwift doesn't have network support, fall back to raw API
-        try await createNetworkViaRawAPI(name: name, driver: driver)
+        try await createNetworkViaRawAPI(name: name, driver: driver, labels: labels)
     }
 
     /// Connect a container to a network
@@ -401,8 +424,11 @@ public class TestcontainersDockerClient: @unchecked Sendable {
     }
 
     /// Raw API call for network create
-    private func createNetworkViaRawAPI(name: String, driver: String) async throws -> String {
-        let endpoint = RawCreateNetworkEndpoint(name: name, driver: driver)
+    private func createNetworkViaRawAPI(name: String, driver: String,
+                                        labels: [String: String] = [:]) async throws
+        -> String
+    {
+        let endpoint = RawCreateNetworkEndpoint(name: name, driver: driver, labels: labels)
         let response = try await client.run(endpoint)
         return response.Id
     }

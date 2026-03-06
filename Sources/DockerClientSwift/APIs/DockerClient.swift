@@ -8,6 +8,7 @@ import NIOHTTP1
 public class DockerClient {
     private let daemonSocket: String
     private let client: HTTPClient
+    private let customHeaders: HTTPHeaders
     let logger: Logger
 
     /// Initialize the `DockerClient`.
@@ -15,14 +16,17 @@ public class DockerClient {
     ///   - daemonSocket: The socket path where the Docker API is listening on. Default is `/var/run/docker.sock`.
     ///   - client: `HTTPClient` instance that is used to execute the requests.
     ///   - logger: `Logger` for the `DockerClient`. Default is `.init(label: "docker-client")`.
+    ///   - customHeaders: Additional HTTP headers to include with every Docker API request.
     public init(
         daemonSocket: String = "/var/run/docker.sock",
         client: HTTPClient = HTTPClient(eventLoopGroupProvider: .singleton),
-        logger: Logger = .init(label: "docker-client"))
+        logger: Logger = .init(label: "docker-client"),
+        customHeaders: HTTPHeaders = HTTPHeaders())
     {
         self.daemonSocket = daemonSocket
         self.client = client
         self.logger = logger
+        self.customHeaders = customHeaders
     }
 
     /// Shuts down the client. The client needs to be shutdown otherwise it can crash on exit.
@@ -44,7 +48,7 @@ public class DockerClient {
         let response = try await client.execute(
             endpoint.method, socketPath: daemonSocket, urlPath: "/v1.44/\(endpoint.path)",
             body: bodyData, logger: logger,
-            headers: HTTPHeaders([("Content-Type", "application/json"), ("Host", "localhost")])
+            headers: buildHeaders()
         )
         response.logResponseBody(logger)
         return try response.decode(as: T.Response.self)
@@ -59,9 +63,22 @@ public class DockerClient {
         let response = try await client.execute(
             endpoint.method, socketPath: daemonSocket, urlPath: "/v1.44/\(endpoint.path)",
             body: bodyData, logger: logger,
-            headers: HTTPHeaders([("Content-Type", "application/json"), ("Host", "localhost")])
+            headers: buildHeaders()
         )
         response.logResponseBody(logger)
         return try response.mapString(map: endpoint.map(data:))
+    }
+
+    /// Builds the HTTP headers for a Docker API request by combining the
+    /// mandatory base headers with any caller-supplied custom headers.
+    func buildHeaders() -> HTTPHeaders {
+        var headers = HTTPHeaders([
+            ("Content-Type", "application/json"),
+            ("Host", "localhost"),
+        ])
+        for (name, value) in customHeaders {
+            headers.replaceOrAdd(name: name, value: value)
+        }
+        return headers
     }
 }
