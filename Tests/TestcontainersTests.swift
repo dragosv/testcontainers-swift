@@ -1,6 +1,6 @@
 @testable import DockerClientSwift
 import NIOHTTP1
-import Testcontainers
+@testable import Testcontainers
 import XCTest
 
 final class ContainerTests: XCTestCase {
