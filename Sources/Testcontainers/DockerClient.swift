@@ -26,7 +26,7 @@ public enum DockerClientError: Error {
 /// A Docker client wrapper for Testcontainers, built on top of DockerClientSwift.
 /// Provides container lifecycle management, image operations, and network support.
 public class TestcontainersDockerClient: @unchecked Sendable {
-    private struct SharedState: Sendable {
+    private enum SharedState {
         static let lock = NSLock()
         // Use a mutable class wrapper stored inside the lock-protected section
     }
