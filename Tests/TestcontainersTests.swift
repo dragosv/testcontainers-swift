@@ -665,7 +665,6 @@ final class ContainerBuilderConfigurationTests: XCTestCase {
         XCTAssertEqual(container.labels["app"], "web")
         XCTAssertEqual(container.labels["env"], "test")
         XCTAssertEqual(container.labels["tier"], "frontend")
-        
     }
 
     func testBuilderWithSpecificPortBinding() {
